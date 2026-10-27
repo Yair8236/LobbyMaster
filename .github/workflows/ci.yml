@@ -15,3 +15,7 @@ jobs:
         run: node tests/bracket.test.js
       - name: Pruebas de reglas de negocio
         run: node tests/store.test.js
+      - name: Pruebas de ubicación y enlaces de Google Maps
+        run: node tests/geo.test.js
+      - name: Pruebas de sincronización con la base
+        run: node tests/sync.test.js
