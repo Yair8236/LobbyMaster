@@ -1,8 +1,8 @@
-# Manual de usuario (versión inicial) · LobbyMaster
+# Manual de usuario · LobbyMaster
 
-**Autor:** Yair Anibal Mamani Ticona · **Versión del sistema:** 0.3.0 (Beta 3) · **Proyecto de Sistemas I, gestión 2-2026**
+**Autor:** Yair Anibal Mamani Ticona · **Versión del sistema:** 0.4.0 (Beta 4) · **Proyecto de Sistemas I, gestión 2-2026**
 
-Este manual explica cómo usar LobbyMaster paso a paso. Es la versión **inicial**: cubre lo que ya está disponible en la beta y crecerá con cada sprint.
+Este manual explica cómo usar LobbyMaster paso a paso. Cubre lo que está disponible en la Beta 4 y crecerá con cada sprint.
 
 ---
 
@@ -14,15 +14,24 @@ LobbyMaster es una página web para **organizar torneos de eSports** (videojuego
 - Aprobar o rechazar inscripciones.
 - Generar automáticamente el **bracket** (el cuadro de partidas de eliminación directa).
 - Registrar resultados, ver el avance del ganador y coronar al **campeón**.
-- Consultar estadísticas, ranking y las sedes en un mapa.
+- Consultar estadísticas, ranking y las sedes en un mapa, **sin necesidad de conocer coordenadas**.
+- Guardar todos los datos en una **base de datos en la nube (Supabase)**, para verlos desde cualquier lugar.
 
 ## 2. Cómo abrirla
 
 1. Descomprime la carpeta del proyecto (o clónala desde GitHub).
-2. Abre el archivo `frontend/index.html` con doble clic. Funciona en Chrome, Edge o Firefox.
-3. No necesita instalar nada ni conexión a internet (con internet carga mejor las tipografías).
+2. Abre el archivo `index.html` de la carpeta principal (o `frontend/index.html`) con doble clic. Funciona en Chrome, Edge o Firefox.
+3. No necesita instalar nada. **Con internet** se conecta a la base de datos Supabase y carga el mapa; **sin internet** sigue funcionando con los datos guardados en tu navegador.
 
-> En esta beta los datos se guardan en tu navegador. Cada persona ve sus propios datos.
+En la parte superior verás un indicador de conexión:
+
+| Indicador | Significado |
+|---|---|
+| **Supabase conectado** (verde) | Tus cambios se guardan en la base de datos en la nube. |
+| **Guardando…** | Se está enviando un cambio a la base. |
+| **Sin conexión · modo local** | No hay internet: puedes seguir trabajando y los cambios se suben al reconectar. |
+
+> Los datos del sistema viven en Supabase: las personas que abran la página ven la misma información. Para revisarlos directamente, abre el proyecto en Supabase → **Table Editor**.
 
 ## 3. Tipos de usuario (roles)
 
@@ -94,7 +103,10 @@ Reglas: solo el capitán inscribe; un equipo no se inscribe dos veces en el mism
 ### 7.1 Crear un torneo
 1. Entra a **Torneos** → **Nuevo torneo**.
 2. Completa: nombre (5 a 40 caracteres, único), juego, sede, fecha (no pasada) y cupos (de 4 a 32).
-3. Pulsa **Guardar**. El torneo queda **Abierto** para recibir inscripciones.
+3. Si la sede no existe todavía, pulsa **Nueva sede en el mapa** (ver sección 9) y vuelve al formulario.
+4. Pulsa **Crear torneo**. El torneo queda **Abierto** para recibir inscripciones.
+
+![Nuevo torneo](img/15_nuevo_torneo.png)
 
 ![Lista de torneos](img/03_torneos.png)
 
@@ -127,7 +139,7 @@ Cuando se juega la final, el torneo pasa a **Finalizado** y el campeón se desta
 En **Administración** puedes:
 
 - **Usuarios:** cambiar el rol o eliminar cuentas (siempre debe quedar al menos un administrador).
-- **Juegos y sedes:** agregar o editar los catálogos (no se elimina uno que esté en uso).
+- **Juegos y sedes:** agregar o editar los catálogos (no se elimina uno que esté en uso). Las sedes se eligen en el mapa.
 - **Bitácora:** ver las últimas acciones del sistema.
 - **Datos:** exportar la información en SQL o JSON y **Restaurar datos de demostración**.
 
@@ -136,9 +148,29 @@ En **Modelo de datos** se muestran el diagrama entidad-relación, la normalizaci
 ![Modelo de datos](img/11_modelo.png)
 
 ## 9. Sedes y mapa
-En **Sedes y mapa** se ven las sedes de torneos con su ubicación y un enlace para abrir **Cómo llegar** en Google Maps.
 
-![Sedes](img/09_sedes.png)
+Nadie necesita saber coordenadas: el lugar se elige en un mapa o se toma de Google Maps.
+
+![Sedes y mapa](img/09_sedes.png)
+
+**Ver una sede:** en **Sedes y mapa** toca un pin (o un nombre de la lista) para ver su dirección, los torneos que se juegan allí y los botones **Ver en Google Maps** y **Cómo llegar**.
+
+**Crear una sede nueva** (organizador o administrador): pulsa **Nueva sede**, escribe el nombre y la dirección o referencia, y elige la ubicación de una de estas formas:
+
+1. **Buscar:** escribe una calle, zona o lugar (por ejemplo, *Plaza Abaroa*), pulsa **Buscar** y elige el resultado correcto.
+2. **Tocar el mapa:** arrastra el mapa, usa **+** y **−** para acercar y toca el lugar exacto; aparece el pin.
+3. **Usar mi ubicación:** si estás en el lugar, el navegador coloca el pin por ti.
+4. **Google Maps:** pulsa **Abrir Google Maps**, busca el lugar, copia el enlace largo de la barra de direcciones (o los números que aparecen al hacer clic derecho sobre el lugar) y pégalos en el campo **Pega aquí el enlace…**; pulsa **Usar**.
+
+![Nueva sede](img/13_nueva_sede.png)
+
+Cuando aparece **Lugar elegido**, pulsa **Guardar sede**. No se puede guardar una sede sin ubicación ni repetir un nombre. Los enlaces cortos (`maps.app.goo.gl`) no traen las coordenadas: abre el enlace y copia la dirección larga.
+
+**En cada torneo:** la pestaña **Información** muestra la **Sede del torneo** en el mapa con los botones para abrirla en Google Maps.
+
+![Sede del torneo](img/14_sede_torneo.png)
+
+Editar o eliminar una sede es solo para el administrador. El mapa y la búsqueda necesitan internet.
 
 ## 10. Problemas frecuentes
 
@@ -148,12 +180,15 @@ En **Sedes y mapa** se ven las sedes de torneos con su ubicación y un enlace pa
 | No me deja inscribir mi equipo | Verifica que seas el capitán, que el torneo esté **Abierto**, que haya cupos y que no estés ya inscrito ese día. |
 | No puedo generar el bracket | Necesitas al menos 4 equipos **aprobados** y ser el organizador del torneo (o administrador). |
 | No veo el menú Administración | Es solo para administradores. |
+| El indicador dice «Sin conexión · modo local» | Revisa tu internet. Puedes seguir trabajando; al reconectar (recarga la página) los cambios se suben a Supabase. |
+| El mapa se ve en blanco o la búsqueda falla | Faltan los mosaicos del mapa por falta de internet. Aun así puedes pegar el enlace de Google Maps. |
 | La pantalla se ve mal o dio un error | Recarga la página. Si persiste, un administrador puede usar **Restaurar datos de demostración**. |
 
-## 11. Alcance de esta versión inicial
+## 11. Alcance de esta versión
 
-Disponible hoy: registro e ingreso con roles, torneos, inscripciones, bracket automático, resultados, campeón, estadísticas, ranking, sedes y administración.
-Pendiente para próximos sprints: historial completo y panel avanzado del organizador, servidor con base de datos compartida y recuperación de contraseña por correo.
+Disponible hoy: registro e ingreso con roles, torneos, inscripciones, bracket automático, resultados, campeón, estadísticas, ranking, **sedes con mapa y Google Maps** y **base de datos en la nube (Supabase)**, además de la administración.
+
+Limitaciones conocidas: la base está abierta para fines académicos, por lo que las cuentas de demostración no deben usar contraseñas reales; la recuperación de contraseña por correo y el panel avanzado del organizador quedan para próximos sprints.
 
 ---
-*Manual elaborado por Yair Anibal Mamani Ticona · LobbyMaster v0.3.0*
+*Manual elaborado por Yair Anibal Mamani Ticona · LobbyMaster v0.4.0*
