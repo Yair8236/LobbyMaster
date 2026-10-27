@@ -1,4 +1,4 @@
-// LobbyMaster Beta 3 · vistas: inicio y torneos (incluye bracket y resultados). Autor: Yair Anibal Mamani Ticona
+// LobbyMaster Beta 4 · vistas: inicio y torneos (incluye bracket y resultados). Autor: Yair Anibal Mamani Ticona
 (function (root) {
   const { h, icon, fmtDate, chip, teamBadge, toast, modal, confirmBox, field, showErrors, barsH, gameCover, empty } = root.UI;
   const Auth = root.Auth, V = (root.Views = root.Views || {});
@@ -74,7 +74,8 @@
     const { db, user } = ctx;
     const fN = field({ label: 'Nombre del torneo', name: 'nombre', value: t ? t.nombre : '', placeholder: 'Ej. Copa Illimani Valorant', maxlength: 40 });
     const fJ = field({ label: 'Videojuego', name: 'id_juego', value: t ? t.id_juego : '', placeholder: 'Selecciona…', options: db.listGames().map(g => ({ value: g.id_juego, label: g.nombre })) });
-    const fS = field({ label: 'Sede', name: 'id_sede', value: t ? t.id_sede : '', placeholder: 'Selecciona…', options: db.listSedes().map(s => ({ value: s.id_sede, label: s.nombre })) });
+    const fS = field({ label: 'Sede', name: 'id_sede', value: t ? t.id_sede : '', placeholder: 'Selecciona…', options: db.listSedes().map(s => ({ value: s.id_sede, label: s.nombre })), hint: 'Si el lugar no está en la lista, agrégalo con «Nueva sede».' });
+    if (Auth.can(user, 'sede.crear') && V.sedeForm) fS.el.appendChild(h('button', { class: 'btn sm', type: 'button', style: { marginTop: '6px' }, onclick: () => V.sedeForm(ctx, null, ns => { fS.input.appendChild(h('option', { value: ns.id_sede }, ns.nombre)); fS.input.value = String(ns.id_sede); fS.error(''); }) }, icon('pin'), 'Nueva sede en el mapa'));
     const fF = field({ label: 'Fecha', name: 'fecha', type: 'date', value: t ? t.fecha : '', min: db.today() });
     const fC = field({ label: 'Cupos (4 a 32)', name: 'cupos', type: 'number', value: t ? t.cupos : 8, min: 4, max: 32, hint: 'Cantidad máxima de equipos aprobados.' });
     const orgs = db.listUsers().filter(u => u.rol !== 'jugador'), fO = Auth.can(user, 'torneo.gestionar_todos') && !t ? field({ label: 'Organizador', name: 'id_organizador', value: user.id_usuario, options: orgs.map(u => ({ value: u.id_usuario, label: u.nombre_usuario })) }) : null;
@@ -179,7 +180,7 @@
     if (tab === 'info') {
       const s = t.sede;
       root_.appendChild(h('div', { class: 'grid g2' }, h('section', { class: 'panel' }, h('header', null, icon('info'), h('h3', null, 'Datos del torneo')), h('dl', { class: 'kv body' }, h('dt', null, 'Videojuego'), h('dd', null, t.juego), h('dt', null, 'Fecha'), h('dd', null, fmtDate(t.fecha)), h('dt', null, 'Formato'), h('dd', null, 'Eliminación directa'), h('dt', null, 'Cupos'), h('dd', null, t.aprobados + ' aprobados de ' + t.cupos + ' · ' + t.pendientes + ' pendientes'), h('dt', null, 'Organizador'), h('dd', null, t.organizador), h('dt', null, 'Estado'), h('dd', null, chip(t.estado)))),
-        h('section', { class: 'panel' }, h('header', null, icon('pin'), h('h3', null, 'Sede')), h('dl', { class: 'kv body' }, h('dt', null, 'Lugar'), h('dd', null, s ? s.nombre : '—'), h('dt', null, 'Coordenadas'), h('dd', { class: 'mono' }, s ? s.latitud + ', ' + s.longitud : '—'), h('dt', null, 'Cómo llegar'), h('dd', null, s ? h('a', { href: 'https://www.google.com/maps?q=' + s.latitud + ',' + s.longitud, target: '_blank', rel: 'noopener' }, 'Abrir en Google Maps') : '—')))));
+        h('section', { class: 'panel' }, h('header', null, icon('pin'), h('h3', null, 'Sede del torneo')), s ? h('div', { class: 'body stack' }, h('dl', { class: 'kv' }, h('dt', null, 'Lugar'), h('dd', null, s.nombre), h('dt', null, 'Dirección'), h('dd', null, s.direccion || '—')), root.Mapa.viewer([s], { selected: s.id_sede, label: 'Mapa de la sede del torneo' }), root.Mapa.botones(s)) : h('div', { class: 'body' }, '—'))));
     }
     return root_;
   };
