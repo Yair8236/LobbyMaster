@@ -16,9 +16,13 @@ CREATE TABLE juegos (
 
 CREATE TABLE sedes_mapa (
   id_sede  INT AUTO_INCREMENT PRIMARY KEY,
-  nombre   VARCHAR(60)   NOT NULL,
-  latitud  DECIMAL(9, 6) NOT NULL,
-  longitud DECIMAL(9, 6) NOT NULL
+  nombre      VARCHAR(60)   NOT NULL,
+  direccion   VARCHAR(120)  NULL,
+  latitud     DECIMAL(9, 6) NOT NULL,
+  longitud    DECIMAL(9, 6) NOT NULL,
+  enlace_maps VARCHAR(300)  NULL,
+  CONSTRAINT ck_sedes_latitud  CHECK (latitud  BETWEEN -90  AND 90),
+  CONSTRAINT ck_sedes_longitud CHECK (longitud BETWEEN -180 AND 180)
 );
 
 CREATE TABLE torneos (
