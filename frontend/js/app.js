@@ -1,4 +1,4 @@
-// LobbyMaster Beta 3 · controlador: sesion, rutas y estructura general. Autor: Yair Anibal Mamani Ticona
+// LobbyMaster Beta 4 · controlador: sesion, rutas y estructura general. Autor: Yair Anibal Mamani Ticona
 (function (root) {
   const { h, clear, icon, svgEl, chip, rolChip, avatar, toast, modal, field, showErrors } = root.UI;
   const Auth = root.Auth, V = root.Views;
@@ -6,7 +6,7 @@
   // almacenamiento: si el navegador bloquea localStorage, la app funciona en memoria
   const mem = {}, memory = { getItem: k => (k in mem ? mem[k] : null), setItem: (k, v) => { mem[k] = String(v); }, removeItem: k => { delete mem[k]; } };
   let storage = memory; try { localStorage.setItem('_t', '1'); localStorage.removeItem('_t'); storage = localStorage; } catch (e) { /* modo memoria */ }
-  const db = root.Store.create(storage);
+  const db = root.Store.create(storage, { onSave: () => { if (root.Sync) root.Sync.schedule(); } });
   const SES = 'lobbymaster.sesion', TEMA = 'lobbymaster.tema';
   const app = document.getElementById('app');
   let sidebarOpen = false;
@@ -70,7 +70,7 @@
       h('div', { class: 'auth-art' }, artSvg(), h('div', { class: 'row', style: { position: 'relative' } }, brandMark(), h('div', null, h('b', { style: { font: '700 22px var(--display)', letterSpacing: '.1em', color: '#e8ecf4' } }, 'LOBBYMASTER'))),
         h('div', null, h('h1', { style: { color: '#e8ecf4' } }, 'Tu torneo, ', h('em', null, 'bien armado.')), h('p', null, 'Inscripciones, brackets automáticos y estadísticas para la comunidad eSports de La Paz y El Alto, en un solo lugar.'),
           h('div', { class: 'stats' }, [['9', 'tablas normalizadas'], ['3', 'roles de usuario'], ['4–32', 'equipos por torneo']].map(([a, b]) => h('div', null, h('b', null, a), h('span', null, b))))),
-        h('div', { class: 'foot' }, 'Proyecto universitario · Yair Anibal Mamani Ticona · Beta 3')),
+        h('div', { class: 'foot' }, 'Proyecto universitario · Yair Anibal Mamani Ticona · Beta 4')),
       h('div', { class: 'auth-form' }, box)));
   }
   function brandMark() {
@@ -94,6 +94,15 @@
     form.addEventListener('submit', e => { e.preventDefault(); save(); });
     const m = modal({ title: 'Mi cuenta', body: form, actions: [{ label: 'Cerrar', cls: 'ghost' }, { label: 'Guardar contraseña', cls: 'pri', onClick: () => { save(); return false; }, keep: true }] });
   }
+
+  // ---------- estado de la base de datos en la nube ----------
+  const SYNC_TXT = { apagado: ['Solo en este navegador', 'off'], conectando: ['Conectando…', 'wait'], guardando: ['Guardando…', 'wait'], conectado: ['Supabase conectado', 'ok'], sin_conexion: ['Sin conexión · modo local', 'bad'], error: ['Error al guardar', 'bad'] };
+  function paintChip(el) { const st = root.Sync.status(), v = SYNC_TXT[st.estado] || SYNC_TXT.apagado; el.className = 'sync-chip ' + v[1]; el.title = (st.detalle ? st.detalle + ' · ' : '') + 'Clic para sincronizar'; el.textContent = ''; el.append(h('i'), v[0]); }
+  root.Sync.onStatus(() => document.querySelectorAll('.sync-chip').forEach(paintChip));
+  function syncChip() {
+    const el = h('button', { type: 'button', class: 'sync-chip', onclick: async () => { const st = root.Sync.status().estado; if (st === 'apagado') { toast('La base en la nube está desactivada (frontend/js/config.js)'); return; } const ok = (st === 'sin_conexion' || st === 'error') ? await root.Sync.reconectar() : await root.Sync.refrescar(); toast(ok ? 'Datos sincronizados con Supabase' : 'No se pudo sincronizar', ok ? 'ok' : 'bad'); render(); } });
+    paintChip(el); return el;
+  }
   const TITLES = { inicio: 'Inicio', torneos: 'Torneos', equipos: 'Equipos', sedes: 'Sedes y mapa', ranking: 'Ranking', admin: 'Administración', modelo: 'Modelo de datos' };
 
   function render() {
@@ -109,11 +118,11 @@
       else view = V.inicio(ctx);
     } catch (e) { console.error(e); view = h('div', { class: 'alert bad' }, 'Ocurrió un error al mostrar esta pantalla. Recarga la página o restaura los datos desde Administración.'); }
     const side = h('aside', { class: 'side' + (sidebarOpen ? ' open' : ''), 'aria-label': 'Navegación principal' },
-      h('div', { class: 'brand' }, brandMark(), h('div', null, h('b', null, 'LobbyMaster'), h('small', null, 'Beta 3'))),
+      h('div', { class: 'brand' }, brandMark(), h('div', null, h('b', null, 'LobbyMaster'), h('small', null, 'Beta 4'))),
       h('nav', { class: 'nav' }, navItems(user).map(it => it.length === 1 ? h('h6', null, it[0]) : h('a', { href: '#/' + it[0], class: name === it[0] ? 'on' : '', onclick: () => { sidebarOpen = false; } }, icon(it[1]), it[2], it[3] ? h('span', { class: 'badge', 'aria-label': it[3] + ' pendientes' }, it[3]) : null))),
       h('div', { class: 'me' }, avatar(user.nombre_usuario), h('div', { class: 'who grow' }, h('b', null, user.nombre_usuario), rolChip(user.rol)), h('button', { class: 'btn ghost icon', title: 'Cerrar sesión', 'aria-label': 'Cerrar sesión', onclick: () => { storage.removeItem(SES); toast('Sesión cerrada'); go('inicio'); render(); } }, icon('logout'))));
     const top = h('header', { class: 'top' }, h('button', { class: 'btn ghost icon menu-btn', 'aria-label': 'Abrir menú', onclick: () => { sidebarOpen = !sidebarOpen; side.classList.toggle('open', sidebarOpen); } }, icon('menu')), h('div', { class: 'crumbs' }, 'LobbyMaster / ', h('b', null, crumb)),
-      h('div', { class: 'row sp' }, h('button', { class: 'btn ghost icon', 'aria-label': 'Cambiar tema claro u oscuro', title: 'Tema', onclick: () => { setTheme(document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light'); render(); } }, icon(document.documentElement.getAttribute('data-theme') === 'light' ? 'moon' : 'sun')),
+      h('div', { class: 'row sp' }, syncChip(), h('button', { class: 'btn ghost icon', 'aria-label': 'Cambiar tema claro u oscuro', title: 'Tema', onclick: () => { setTheme(document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light'); render(); } }, icon(document.documentElement.getAttribute('data-theme') === 'light' ? 'moon' : 'sun')),
         h('button', { class: 'btn sm', onclick: () => accountModal(user) }, icon('user'), 'Mi cuenta')));
     const sy = window.scrollY, keep = app.querySelector('.bk-view'), kx = keep ? keep.scrollLeft : 0, same = keep && parts[0] === 'torneos';
     clear(app); app.className = 'app';
@@ -122,6 +131,8 @@
     window.scrollTo(0, sy);
   }
   window.addEventListener('hashchange', () => { window.scrollTo(0, 0); render(); });
-  render();
+  // arranque: primero se sincroniza con la base de datos (si hay internet) y luego se muestra la aplicacion
+  clear(app); app.className = ''; app.appendChild(h('div', { class: 'splash' }, h('div', { class: 'spin' }), h('p', null, 'Conectando con la base de datos…')));
+  root.Sync.init(db).then(render, render);
   root.LobbyApp = { db, render, go };
 })(this);
