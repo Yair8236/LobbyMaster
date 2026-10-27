@@ -1,5 +1,5 @@
-// LobbyMaster Beta 3 - capa MODELO. Guarda los datos en 9 tablas normalizadas (mismo esquema que database/schema.sql).
-// En la beta persiste en localStorage; en la version final solo se reemplaza esta capa por MySQL/PostgreSQL.
+// LobbyMaster Beta 4 - capa MODELO. Guarda los datos en 9 tablas normalizadas (mismo esquema que database/schema.sql).
+// Persiste en localStorage y, mediante opts.onSave / hydrate, se sincroniza con la base de datos PostgreSQL de Supabase (frontend/js/sync.js).
 // Autor: Yair Anibal Mamani Ticona
 (function (root) {
   const Bracket = typeof require !== 'undefined' ? require('./bracket.js') : root.Bracket;
@@ -14,7 +14,7 @@
   const SCHEMA = {
     usuarios: { pk: 'id_usuario', cols: [['id_usuario', 'INT', 'PK', 'Identificador del usuario'], ['nombre_usuario', 'VARCHAR(20)', 'UQ', 'Nombre para iniciar sesión'], ['correo', 'VARCHAR(100)', 'UQ', 'Correo electrónico'], ['contrasena_hash', 'VARCHAR(255)', '', 'Contraseña cifrada (SHA-256 con sal)'], ['rol', 'VARCHAR(12)', 'CK', 'admin, organizador o jugador']] },
     juegos: { pk: 'id_juego', cols: [['id_juego', 'INT', 'PK', 'Identificador del juego'], ['nombre', 'VARCHAR(40)', 'UQ', 'Nombre del videojuego']] },
-    sedes_mapa: { pk: 'id_sede', cols: [['id_sede', 'INT', 'PK', 'Identificador de la sede'], ['nombre', 'VARCHAR(60)', '', 'Nombre de la sede'], ['latitud', 'DECIMAL(9,6)', '', 'Latitud'], ['longitud', 'DECIMAL(9,6)', '', 'Longitud']] },
+    sedes_mapa: { pk: 'id_sede', cols: [['id_sede', 'INT', 'PK', 'Identificador de la sede'], ['nombre', 'VARCHAR(60)', '', 'Nombre de la sede'], ['direccion', 'VARCHAR(120)', '', 'Dirección o referencia (opcional)'], ['latitud', 'DECIMAL(9,6)', 'CK', 'Latitud (se elige en el mapa)'], ['longitud', 'DECIMAL(9,6)', 'CK', 'Longitud (se elige en el mapa)'], ['enlace_maps', 'VARCHAR(300)', '', 'Enlace de Google Maps (opcional)']] },
     torneos: { pk: 'id_torneo', cols: [['id_torneo', 'INT', 'PK', 'Identificador del torneo'], ['nombre', 'VARCHAR(40)', 'UQ', 'Nombre del torneo'], ['fecha', 'DATE', '', 'Fecha de realización'], ['cupos', 'INT', 'CK', 'Equipos permitidos (4 a 32)'], ['estado', 'VARCHAR(12)', 'CK', 'abierto, en_curso o finalizado'], ['id_juego', 'INT', 'FK', 'Juego → juegos'], ['id_sede', 'INT', 'FK', 'Sede → sedes_mapa'], ['id_organizador', 'INT', 'FK', 'Organizador → usuarios']] },
     equipos: { pk: 'id_equipo', cols: [['id_equipo', 'INT', 'PK', 'Identificador del equipo'], ['nombre', 'VARCHAR(24)', 'UQ', 'Nombre del equipo'], ['id_capitan', 'INT', 'FK', 'Capitán → usuarios']] },
     jugadores_roster: { pk: 'id_roster', cols: [['id_roster', 'INT', 'PK', 'Identificador'], ['id_equipo', 'INT', 'FK', 'Equipo → equipos'], ['nickname', 'VARCHAR(30)', '', 'Apodo del jugador']] },
@@ -35,16 +35,19 @@
 
   function create(storage, opts) {
     opts = opts || {};
-    const KEY = 'lobbymaster.beta3.db';
+    const KEY = 'lobbymaster.beta4.db';
     const nowFn = opts.now || (() => new Date());
-    let S, silent = false;
+    let S, silent = false, hydrating = false, logSeq = 0;
 
     // ---------- persistencia ----------
-    const blank = () => ({ v: 3, seq: {}, t: Object.fromEntries(TABLES.map(t => [t, []])), log: [] });
-    function save() { try { storage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* sin almacenamiento: la sesion funciona en memoria */ } }
+    const blank = () => ({ v: 4, seq: {}, t: Object.fromEntries(TABLES.map(t => [t, []])), log: [] });
+    function save() {
+      try { storage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* sin almacenamiento: la sesion funciona en memoria */ }
+      if (opts.onSave && !hydrating) { try { opts.onSave(); } catch (e) { /* la sincronizacion nunca debe romper la app */ } }
+    }
     function load() {
       try { const raw = storage.getItem(KEY); S = raw ? JSON.parse(raw) : null; } catch (e) { S = null; }
-      if (!S || S.v !== 3) { S = blank(); seed(); save(); }
+      if (!S || S.v !== 4) { S = blank(); seed(); save(); }
     }
     function insert(table, row) { const pk = SCHEMA[table].pk; S.seq[table] = (S.seq[table] || 0) + 1; row = Object.assign({ [pk]: S.seq[table] }, row); S.t[table].push(row); return row; }
     const rows = (t, f) => (f ? S.t[t].filter(f) : S.t[t]);
@@ -52,7 +55,7 @@
     const remove = (t, f) => { S.t[t] = S.t[t].filter(r => !f(r)); };
     function log(actor, msg) {
       if (silent) return;
-      S.log.unshift({ t: stamp(nowFn()), u: actor ? actor.nombre_usuario : 'sistema', msg });
+      S.log.unshift({ id: Date.now() * 1000 + (logSeq++ % 1000), t: stamp(nowFn()), u: actor ? actor.nombre_usuario : 'sistema', msg });
       S.log = S.log.slice(0, 80);
     }
     const pub = u => u && { id_usuario: u.id_usuario, nombre_usuario: u.nombre_usuario, correo: u.correo, rol: u.rol };
@@ -129,12 +132,13 @@
     function checkSede(f) {
       const e = {}; const lat = Number(f.latitud), lon = Number(f.longitud);
       if (clean(f.nombre).length < 3 || clean(f.nombre).length > 60) e.nombre = 'Entre 3 y 60 caracteres';
-      if (f.latitud === '' || !isFinite(lat) || lat < -90 || lat > 90) e.latitud = 'Latitud entre -90 y 90';
-      if (f.longitud === '' || !isFinite(lon) || lon < -180 || lon > 180) e.longitud = 'Longitud entre -180 y 180';
+      if (clean(f.direccion).length > 120) e.direccion = 'Máximo 120 caracteres';
+      if (f.latitud === '' || f.latitud == null || !isFinite(lat) || lat < -90 || lat > 90 || f.longitud === '' || f.longitud == null || !isFinite(lon) || lon < -180 || lon > 180) e.ubicacion = 'Elige la ubicación en el mapa o pega el enlace de Google Maps';
       if (Object.keys(e).length) throw new VErr('Revisa los campos marcados', e);
-      return { nombre: clean(f.nombre), latitud: Math.round(lat * 1e6) / 1e6, longitud: Math.round(lon * 1e6) / 1e6 };
+      const enlace = clean(f.enlace_maps);
+      return { nombre: clean(f.nombre), direccion: clean(f.direccion) || null, latitud: Math.round(lat * 1e6) / 1e6, longitud: Math.round(lon * 1e6) / 1e6, enlace_maps: /^https?:\/\//i.test(enlace) ? enlace.slice(0, 300) : null };
     }
-    function addSede(actor, f) { need(actor, 'catalogos.admin'); const d = checkSede(f); const s = insert('sedes_mapa', d); log(actor, 'Agregó la sede ' + d.nombre); save(); return s; }
+    function addSede(actor, f) { need(actor, 'sede.crear'); const d = checkSede(f); if (rows('sedes_mapa', x => ci(x.nombre) === ci(d.nombre)).length) throw new VErr('Ya existe una sede con ese nombre', { nombre: 'Ya existe una sede con ese nombre' }); const s = insert('sedes_mapa', d); log(actor, 'Agregó la sede ' + d.nombre); save(); return s; }
     function updateSede(actor, id, f) { need(actor, 'catalogos.admin'); const s = find('sedes_mapa', id); if (!s) fail('Sede no encontrada'); Object.assign(s, checkSede(f)); log(actor, 'Editó la sede ' + s.nombre); save(); return s; }
     function deleteSede(actor, id) {
       need(actor, 'catalogos.admin'); const s = find('sedes_mapa', id); if (!s) fail('Sede no encontrada');
@@ -417,6 +421,17 @@
     }
     const exportJSON = () => JSON.stringify(S.t, null, 2);
     const tables = () => Object.fromEntries(TABLES.map(t => [t, clone(S.t[t])]));
+    // Reemplaza los datos locales por los de la base remota (Supabase) sin disparar otra sincronizacion
+    function hydrate(remote) {
+      hydrating = true;
+      try {
+        const t = Object.fromEntries(TABLES.map(n => [n, (remote.t[n] || []).slice()]));
+        const seq = {}; TABLES.forEach(n => { seq[n] = t[n].reduce((m, r) => Math.max(m, Number(r[SCHEMA[n].pk]) || 0), 0); });
+        S = { v: 4, seq, t, log: (remote.log || []).slice(0, 80) };
+        save();
+      } finally { hydrating = false; }
+    }
+    const snapshot = () => ({ t: clone(S.t), log: clone(S.log) });
     function reset(actor) { storage.removeItem && storage.removeItem(KEY); S = blank(); seed(); log(actor || null, 'Restauró los datos de demostración'); save(); }
 
     // ---------- datos de demostracion (ficticios) ----------
@@ -433,7 +448,7 @@
         for (let k = 0; k < 5; k++) insert('jugadores_roster', { id_equipo: e.id_equipo, nickname: tags[(i * 5 + k) % tags.length] + (i * 5 + k >= tags.length ? i : '') });
       });
       ['Valorant', 'League of Legends', 'Counter-Strike 2', 'EA Sports FC 26', 'Mobile Legends'].forEach(n => insert('juegos', { nombre: n }));
-      [['Arena Sopocachi', -16.5112, -68.1262], ['Hub Miraflores', -16.5045, -68.1188], ['Centro Esports Calacoto', -16.5395, -68.082], ['Lobby Center El Alto', -16.5045, -68.163], ['Net Zone Obrajes', -16.5265, -68.105], ['Sala Gamer Centro', -16.4958, -68.1337]].forEach(([nombre, latitud, longitud]) => insert('sedes_mapa', { nombre, latitud, longitud }));
+      [['Arena Sopocachi', 'Zona Sopocachi, La Paz', -16.5112, -68.1262], ['Hub Miraflores', 'Zona Miraflores, La Paz', -16.5045, -68.1188], ['Centro Esports Calacoto', 'Calacoto, Zona Sur, La Paz', -16.5395, -68.082], ['Lobby Center El Alto', 'Zona 16 de Julio, El Alto', -16.5045, -68.163], ['Net Zone Obrajes', 'Obrajes, La Paz', -16.5265, -68.105], ['Sala Gamer Centro', 'Zona Central, La Paz', -16.4958, -68.1337]].forEach(([nombre, direccion, latitud, longitud]) => insert('sedes_mapa', { nombre, direccion, latitud, longitud, enlace_maps: null }));
       const day = k => { const d = new Date(nowFn()); d.setDate(d.getDate() + k); return d; };
       const org = rows('usuarios', u => u.nombre_usuario === 'organizador')[0], ceja = rows('usuarios', u => u.nombre_usuario === 'ceja_events')[0];
       const mk = (nombre, k, cupos, g, s, o) => createTorneo(Object.assign({}, o, { rol: o.rol }), { nombre, fecha: ymd(day(k)), cupos, id_juego: g, id_sede: s }, { seed: true });
@@ -448,7 +463,7 @@
       play(T1.id_torneo, [[0, 0, 2, 0], [0, 1, 2, 1], [0, 2, 1, 2], [0, 3, 2, 1], [1, 0, 2, 0], [1, 1, 1, 2], [2, 0, 2, 1]], day(-35));
       play(T2.id_torneo, [[0, 0, 2, 1], [0, 1, 0, 2], [1, 0, 2, 0], [0, 2, 2, 0]], day(-2));
       void admin; silent = false;
-      S.log = [{ t: stamp(nowFn()), u: 'sistema', msg: 'Datos de demostración cargados' }];
+      S.log = [{ id: Date.now() * 1000, t: stamp(nowFn()), u: 'sistema', msg: 'Datos de demostración cargados' }];
     }
 
     load();
@@ -461,7 +476,7 @@
       listInscripciones, listInscripcionesDeEquipos, inscribir, resolver, retirar,
       getBracket, generarBracket, registrarResultado, previewImpact, reiniciarBracket,
       tablaTorneo, ranking, historialEquipo, resumen, bitacora,
-      exportSQL, exportJSON, tables, reset, today
+      exportSQL, exportJSON, tables, reset, today, hydrate, snapshot
     };
   }
 

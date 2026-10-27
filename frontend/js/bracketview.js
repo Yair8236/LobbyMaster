@@ -1,4 +1,4 @@
-// LobbyMaster Beta 3 · dibujo del bracket de eliminacion directa. Autor: Yair Anibal Mamani Ticona
+// LobbyMaster Beta 4 · dibujo del bracket de eliminacion directa. Autor: Yair Anibal Mamani Ticona
 (function (root) {
   const { h, svgEl, icon, teamBadge } = root.UI;
   const CW = 236, CH = 68, GAP = 72, SLOT = 92, HEAD = 40, CHAMP_W = 214, CHAMP_H = 158;

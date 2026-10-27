@@ -94,4 +94,16 @@ ok('persistencia', () => {
   const st = mem(); const a = Store.create(st); a.addGame(a.login('admin', 'Admin2026'), 'Dota 2');
   assert.ok(Store.create(st).listGames().some(g => g.nombre === 'Dota 2'));
 });
+ok('sedes: ubicacion elegida en el mapa, permisos y direccion', () => {
+  const base = { nombre: 'Sede Maps', direccion: 'Av. Ejemplo 123', latitud: -16.52, longitud: -68.11, enlace_maps: 'https://www.google.com/maps/@-16.52,-68.11,17z' };
+  throwsMsg(() => db.addSede(jug, base), /permiso/);
+  const s = db.addSede(org, base); assert.strictEqual(s.direccion, 'Av. Ejemplo 123'); assert.strictEqual(s.latitud, -16.52);
+  throwsMsg(() => db.addSede(org, Object.assign({}, base, { latitud: '', longitud: '' })), /Elige la ubicación/);
+  throwsMsg(() => db.addSede(org, Object.assign({}, base, { latitud: 120 })), /Elige la ubicación/);
+  throwsMsg(() => db.addSede(org, base), /Ya existe una sede/);
+  const s2 = db.addSede(org, { nombre: 'Sede sin direccion', latitud: -16.5, longitud: -68.1, enlace_maps: 'javascript:alert(1)' });
+  assert.strictEqual(s2.direccion, null); assert.strictEqual(s2.enlace_maps, null, 'solo se aceptan enlaces http(s)');
+  throwsMsg(() => db.updateSede(org, s.id_sede, base), /permiso/); db.updateSede(admin, s.id_sede, Object.assign({}, base, { nombre: 'Sede Maps 2' }));
+  assert.strictEqual(db.listSedes().find(x => x.id_sede === s.id_sede).nombre, 'Sede Maps 2');
+});
 console.log('Pruebas del modelo: ' + n + ' grupos OK');

@@ -1,4 +1,4 @@
-// LobbyMaster Beta 3 · utilidades de interfaz (vista). Autor: Yair Anibal Mamani Ticona
+// LobbyMaster Beta 4 · utilidades de interfaz (vista). Autor: Yair Anibal Mamani Ticona
 (function (root) {
   // Se construye el DOM con nodos de texto (nunca innerHTML con datos del usuario) para evitar inyeccion de codigo (XSS)
   function h(tag, attrs) {

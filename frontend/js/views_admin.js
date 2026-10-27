@@ -1,4 +1,4 @@
-// LobbyMaster Beta 3 · vistas: administracion y modelo de datos normalizado. Autor: Yair Anibal Mamani Ticona
+// LobbyMaster Beta 4 · vistas: administracion y modelo de datos normalizado. Autor: Yair Anibal Mamani Ticona
 (function (root) {
   const { h, icon, fmtDate, fmtStamp, chip, rolChip, avatar, toast, modal, confirmBox, field, showErrors, download, empty, sql } = root.UI;
   const Auth = root.Auth, V = (root.Views = root.Views || {});

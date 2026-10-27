@@ -7,6 +7,19 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y 
 - HU-07: marcador con avance de ronda (en revisión).
 - HU-08: campeón y estadísticas (en revisión).
 
+## [0.4.0] · Beta 4
+### Agregado
+- Base de datos real en **Supabase (PostgreSQL)** con las 9 tablas, llaves foráneas, restricciones y seguridad de filas; datos de demostración cargados (`database/supabase_*.sql`).
+- Sincronización automática de la aplicación con la base (`frontend/js/sync.js`): descarga al abrir, sube solo lo que cambió, modo sin conexión y botón de estado.
+- Sedes con **mapa propio sobre OpenStreetMap**: buscar el lugar, tocar el mapa, usar mi ubicación o pegar el enlace de Google Maps; botones «Ver en Google Maps» y «Cómo llegar» (HU-09, en revisión).
+- Las sedes ahora guardan dirección y enlace de Google Maps; los organizadores pueden crear sedes desde el formulario de torneo.
+- `index.html` en la raíz para publicar con GitHub Pages; pruebas `geo` y `sync` en la integración continua.
+### Cambiado
+- Las sedes ya no piden escribir latitud y longitud.
+- Los diálogos largos mantienen visibles el título y los botones.
+### Corregido
+- La sincronización acepta respuestas vacías (201/204) de la API de Supabase.
+
 ## [0.3.0] · Beta 3
 ### Agregado
 - Bracket de eliminación directa para 4 a 32 equipos con BYE automáticos (HU-06).

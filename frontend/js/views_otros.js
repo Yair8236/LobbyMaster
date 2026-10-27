@@ -1,4 +1,4 @@
-// LobbyMaster Beta 3 · vistas: equipos, sedes (mapa) y ranking. Autor: Yair Anibal Mamani Ticona
+// LobbyMaster Beta 4 · vistas: equipos, sedes (mapa) y ranking. Autor: Yair Anibal Mamani Ticona
 (function (root) {
   const { h, icon, svgEl, fmtDate, chip, teamBadge, toast, modal, confirmBox, field, showErrors, barsH, empty } = root.UI;
   const Auth = root.Auth, V = (root.Views = root.Views || {});
@@ -52,49 +52,39 @@
   };
 
   // ---------- sedes ----------
-  function sedeForm(ctx, s) {
+  // Formulario de sede: se elige el lugar en el mapa (o se busca / pega el enlace de Google Maps); no se escriben coordenadas.
+  function sedeForm(ctx, s, onSaved) {
     const { db, user } = ctx;
-    const f = { nombre: field({ label: 'Nombre de la sede', name: 'nombre', value: s ? s.nombre : '', maxlength: 60 }), latitud: field({ label: 'Latitud', name: 'latitud', value: s ? s.latitud : '', placeholder: '-16.5000', inputmode: 'decimal', hint: 'La Paz está cerca de -16.5' }), longitud: field({ label: 'Longitud', name: 'longitud', value: s ? s.longitud : '', placeholder: '-68.1500', inputmode: 'decimal' }) };
-    const all = Object.values(f), form = h('form', { class: 'form', novalidate: true }, f.nombre.el, h('div', { class: 'two' }, f.latitud.el, f.longitud.el));
-    const save = () => { try { const d = { nombre: f.nombre.value, latitud: f.latitud.value, longitud: f.longitud.value }; if (s) db.updateSede(user, s.id_sede, d); else db.addSede(user, d); toast('Sede guardada', 'ok'); m.close(); ctx.refresh(); } catch (e) { if (e.name !== 'VErr') throw e; if (!showErrors(all, e)) toast(e.message, 'bad'); } };
+    const f = { nombre: field({ label: 'Nombre de la sede', name: 'nombre', value: s ? s.nombre : '', maxlength: 60, placeholder: 'Ej. Arena Sopocachi' }), direccion: field({ label: 'Dirección o referencia (opcional)', name: 'direccion', value: s && s.direccion ? s.direccion : '', maxlength: 120, placeholder: 'Ej. Calle Jaimes Freyre, frente a la plaza' }) };
+    const pk = root.Mapa.picker({ lat: s ? s.latitud : null, lng: s ? s.longitud : null, enlace_maps: s ? s.enlace_maps : null, name: 'ubicacion' });
+    const all = [f.nombre, f.direccion, pk], form = h('form', { class: 'form', novalidate: true }, f.nombre.el, f.direccion.el, pk.el);
+    const save = () => {
+      try {
+        const u = pk.get() || {}, d = { nombre: f.nombre.value, direccion: f.direccion.value, latitud: u.latitud == null ? '' : u.latitud, longitud: u.longitud == null ? '' : u.longitud, enlace_maps: u.enlace_maps || (s && s.enlace_maps) || '' };
+        const r = s ? db.updateSede(user, s.id_sede, d) : db.addSede(user, d); toast('Sede guardada', 'ok'); m.close(); if (onSaved) onSaved(r); else ctx.refresh();
+      } catch (e) { if (e.name !== 'VErr') throw e; if (!showErrors(all, e)) toast(e.message, 'bad'); }
+    };
     form.addEventListener('submit', e => { e.preventDefault(); save(); });
-    const m = modal({ title: s ? 'Editar sede' : 'Nueva sede', body: form, actions: [{ label: 'Cancelar', cls: 'ghost' }, { label: 'Guardar', cls: 'pri', onClick: () => { save(); return false; }, keep: true }] });
+    const m = modal({ title: s ? 'Editar sede' : 'Nueva sede', wide: true, body: form, actions: [{ label: 'Cancelar', cls: 'ghost' }, { label: 'Guardar sede', cls: 'pri', onClick: () => { save(); return false; }, keep: true }] });
   }
+  V.sedeForm = sedeForm;
   let selSede = null;
   V.sedes = ctx => {
-    const { db, user } = ctx, sedes = db.listSedes(), ts = db.listTorneos(), isAdm = Auth.can(user, 'catalogos.admin');
+    const { db, user } = ctx, sedes = db.listSedes(), ts = db.listTorneos(), isAdm = Auth.can(user, 'catalogos.admin'), puedeCrear = Auth.can(user, 'sede.crear');
     if (!sedes.some(s => s.id_sede === selSede)) selSede = sedes.length ? sedes[0].id_sede : null;
-    const W = 900, Hh = 540, pad = 80, padR = 210;
-    const lats = sedes.map(s => s.latitud), lons = sedes.map(s => s.longitud);
-    const lat0 = lats.length ? (Math.min(...lats) + Math.max(...lats)) / 2 : -16.5, k = Math.cos(lat0 * Math.PI / 180);
-    const x0 = lons.length ? Math.min(...lons) : -68.2, x1 = lons.length ? Math.max(...lons) : -68.1, y0 = lats.length ? Math.min(...lats) : -16.6, y1 = lats.length ? Math.max(...lats) : -16.4;
-    const sc = Math.min((W - pad - padR) / Math.max(1e-4, (x1 - x0) * k), (Hh - 2 * pad) / Math.max(1e-4, y1 - y0)), ox = pad + (W - pad - padR - (x1 - x0) * k * sc) / 2, oy = (Hh - (y1 - y0) * sc) / 2;
-    const px = lon => ox + (lon - x0) * k * sc, py = lat => oy + (y1 - lat) * sc;
-    const svg = svgEl('svg', { viewBox: '0 0 ' + W + ' ' + Hh, role: 'img', 'aria-label': 'Mapa esquemático de sedes por coordenadas' });
-    // cuadricula de coordenadas
-    const step = 0.01, g = svgEl('g', { stroke: 'var(--line)', 'stroke-width': 1 });
-    for (let lo = Math.ceil((x0 - 0.02) / step) * step; lo <= x1 + 0.02; lo += step) { const x = px(lo); if (x > 0 && x < W) { g.appendChild(svgEl('line', { x1: x, y1: 0, x2: x, y2: Hh })); const t = svgEl('text', { x: x + 4, y: Hh - 8, fill: 'var(--tx3)', 'font-size': 10, 'font-family': 'var(--mono)' }); t.textContent = lo.toFixed(2); svg.appendChild(t); } }
-    for (let la = Math.ceil((y0 - 0.02) / step) * step; la <= y1 + 0.02; la += step) { const y = py(la); if (y > 0 && y < Hh) { g.appendChild(svgEl('line', { x1: 0, y1: y, x2: W, y2: y })); const t = svgEl('text', { x: 6, y: y - 4, fill: 'var(--tx3)', 'font-size': 10, 'font-family': 'var(--mono)' }); t.textContent = la.toFixed(2); svg.appendChild(t); } }
-    svg.insertBefore(g, svg.firstChild);
-    sedes.forEach(s => {
-      const n = ts.filter(t => t.id_sede === s.id_sede).length, x = px(s.longitud), y = py(s.latitud), on = s.id_sede === selSede;
-      const pin = svgEl('g', { class: 'pin', tabindex: 0, role: 'button', 'aria-label': s.nombre });
-      pin.appendChild(svgEl('circle', { cx: x, cy: y, r: on ? 22 : 15, fill: 'var(--ac)', 'fill-opacity': on ? .22 : .12 }));
-      pin.appendChild(svgEl('circle', { class: 'core', cx: x, cy: y, r: 9, fill: on ? 'var(--ac)' : 'var(--s3)', stroke: 'var(--ac)', 'stroke-width': 2 }));
-      const c = svgEl('text', { x, y: y + 3.6, 'text-anchor': 'middle', fill: on ? '#fff' : 'var(--tx)', 'font-size': 11, 'font-weight': 700 }); c.textContent = n; pin.appendChild(c);
-      const lw = s.nombre.length * 6.6 + 16;
-      pin.appendChild(svgEl('rect', { x: x + 18, y: y - 11, width: lw, height: 22, rx: 3, fill: 'var(--s1)', stroke: on ? 'var(--ac)' : 'var(--line2)' }));
-      const t = svgEl('text', { x: x + 26, y: y + 4, fill: 'var(--tx)', 'font-size': 12, 'font-weight': 600 }); t.textContent = s.nombre; pin.appendChild(t);
-      pin.addEventListener('click', () => { selSede = s.id_sede; ctx.refresh(); }); pin.addEventListener('keydown', e => { if (e.key === 'Enter') { selSede = s.id_sede; ctx.refresh(); } });
-      svg.appendChild(pin);
-    });
-    const sel = sedes.find(s => s.id_sede === selSede);
     const root_ = h('div');
-    root_.appendChild(h('div', { class: 'page-head' }, h('div', null, h('h1', null, 'Sedes y mapa'), h('p', null, 'Lugares donde se juegan los torneos, ubicados por sus coordenadas (latitud y longitud).')), h('div', { class: 'sp' }, isAdm ? h('button', { class: 'btn pri', onclick: () => sedeForm(ctx) }, icon('plus'), 'Nueva sede') : null)));
-    root_.appendChild(h('div', { class: 'grid g-main' }, h('div', null, h('div', { class: 'map' }, svg), h('p', { class: 'dim mt', style: { fontSize: '12.5px' } }, 'Esquema referencial a escala (proyección simple de coordenadas). En la versión final, esta vista usa Mapbox GL JS con mapa base. El número en cada marcador es la cantidad de torneos en la sede.')),
-      h('div', { class: 'stack' }, sel ? h('section', { class: 'panel accent' }, h('header', null, icon('pin'), h('h3', null, sel.nombre)), h('dl', { class: 'kv body' }, h('dt', null, 'Latitud'), h('dd', { class: 'mono' }, String(sel.latitud)), h('dt', null, 'Longitud'), h('dd', { class: 'mono' }, String(sel.longitud)), h('dt', null, 'Mapa'), h('dd', null, h('a', { href: 'https://www.google.com/maps?q=' + sel.latitud + ',' + sel.longitud, target: '_blank', rel: 'noopener' }, 'Abrir en Google Maps')), h('dt', null, 'Torneos'), h('dd', null, ts.filter(t => t.id_sede === sel.id_sede).length ? ts.filter(t => t.id_sede === sel.id_sede).map(t => h('div', null, h('a', { href: '#/torneos/' + t.id_torneo }, t.nombre), h('span', { class: 'dim' }, ' · ' + fmtDate(t.fecha)))) : 'Ninguno por ahora')),
+    const sel = sedes.find(s => s.id_sede === selSede);
+    root_.appendChild(h('div', { class: 'page-head' }, h('div', null, h('h1', null, 'Sedes y mapa'), h('p', null, 'Lugares donde se juegan los torneos. Se ubican en el mapa o con Google Maps; no hace falta saber coordenadas.')), h('div', { class: 'sp' }, puedeCrear ? h('button', { class: 'btn pri', onclick: () => sedeForm(ctx) }, icon('plus'), 'Nueva sede') : null)));
+    if (!sedes.length) { root_.appendChild(h('div', { class: 'panel' }, empty('pin', 'Aún no hay sedes', puedeCrear ? 'Agrega la primera con el botón «Nueva sede».' : 'El administrador u organizadores pueden agregarlas.'))); return root_; }
+    const torneosDe = id => ts.filter(t => t.id_sede === id);
+    root_.appendChild(h('div', { class: 'grid g-main' },
+      h('div', null, root.Mapa.viewer(sedes, { tall: true, selected: selSede, labels: true, onPick: id => { selSede = id; ctx.refresh(); }, label: 'Mapa con todas las sedes. Toca un pin para ver sus datos.' }),
+        h('p', { class: 'dim mt', style: { fontSize: '12.5px' } }, 'Arrastra para mover el mapa y usa + / − para acercar. Toca un pin para ver la sede. Mapa © colaboradores de OpenStreetMap.')),
+      h('div', { class: 'stack' }, sel ? h('section', { class: 'panel accent' }, h('header', null, icon('pin'), h('h3', null, sel.nombre)),
+        h('dl', { class: 'kv body' }, h('dt', null, 'Dirección'), h('dd', null, sel.direccion || 'Sin dirección escrita'), h('dt', null, 'Ubicación'), h('dd', { class: 'mono' }, sel.latitud + ', ' + sel.longitud), h('dt', null, 'Torneos'), h('dd', null, torneosDe(sel.id_sede).length ? torneosDe(sel.id_sede).map(t => h('div', null, h('a', { href: '#/torneos/' + t.id_torneo }, t.nombre), h('span', { class: 'dim' }, ' · ' + fmtDate(t.fecha)))) : 'Ninguno por ahora')),
+        h('div', { style: { padding: '0 18px 14px' } }, root.Mapa.botones(sel)),
         isAdm ? h('div', { class: 'row', style: { padding: '0 18px 18px' } }, h('button', { class: 'btn sm', onclick: () => sedeForm(ctx, sel) }, icon('edit'), 'Editar'), h('button', { class: 'btn sm danger', onclick: async () => { if (await confirmBox({ title: 'Eliminar sede', message: '¿Eliminar «' + sel.nombre + '»?', confirm: 'Eliminar', danger: true })) { try { db.deleteSede(user, sel.id_sede); toast('Sede eliminada', 'ok'); ctx.refresh(); } catch (e) { toast(e.message, 'bad'); } } } }, icon('trash'), 'Eliminar')) : null) : null,
-        h('section', { class: 'panel' }, h('header', null, icon('list'), h('h3', null, 'Todas las sedes')), h('ul', { class: 'list', style: { padding: '0 18px' } }, sedes.map(s => h('li', { style: { cursor: 'pointer' }, onclick: () => { selSede = s.id_sede; ctx.refresh(); } }, icon('pin'), h('b', { class: 'grow', style: { color: s.id_sede === selSede ? 'var(--ac2)' : '' } }, s.nombre), h('span', { class: 'mono dim' }, ts.filter(t => t.id_sede === s.id_sede).length))))))));
+        h('section', { class: 'panel' }, h('header', null, icon('list'), h('h3', null, 'Todas las sedes')), h('ul', { class: 'list', style: { padding: '0 18px' } }, sedes.map(s => h('li', { style: { cursor: 'pointer' }, onclick: () => { selSede = s.id_sede; ctx.refresh(); } }, icon('pin'), h('b', { class: 'grow', style: { color: s.id_sede === selSede ? 'var(--ac2)' : '' } }, s.nombre), h('span', { class: 'mono dim' }, torneosDe(s.id_sede).length))))))));
     return root_;
   };
 

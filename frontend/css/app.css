@@ -171,3 +171,32 @@ svg.ic { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-wid
   .kv { grid-template-columns: 1fr; gap: 2px 0; } .kv dt { margin-top: 8px; }
 }
 @media print { body::before, .side, .top, .bk-tools, .toasts { display: none !important; } .app { display: block; } .page { padding: 0; max-width: none; } .bk-view { border: 0; overflow: visible; } :root { --bg: #fff; } }
+
+/* ---------- Beta 4: mapa propio, selector de ubicacion y estado de la nube ---------- */
+.slippy { position: relative; overflow: hidden; background: var(--s2) repeating-linear-gradient(0deg, transparent 0 39px, var(--grid) 39px 40px), repeating-linear-gradient(90deg, transparent 0 39px, var(--grid) 39px 40px); border: 1px solid var(--line); border-radius: 6px; cursor: grab; touch-action: none; user-select: none; outline-offset: 2px; }
+.slippy.moving { cursor: grabbing; }
+.pk-map { height: 300px; } .pk-map.tall { height: 520px; }
+.sl-tiles, .sl-markers { position: absolute; inset: 0; } .sl-markers { pointer-events: none; }
+.sl-tiles img { position: absolute; left: 0; top: 0; width: 256px; height: 256px; max-width: none; pointer-events: none; }
+.sl-tiles img.off { visibility: hidden; }
+.sl-pin { position: absolute; left: 0; top: 0; pointer-events: auto; border: 0; background: none; padding: 0; width: 30px; height: 38px; margin: -38px 0 0 -15px; cursor: pointer; }
+.sl-pin svg { width: 30px; height: 38px; display: block; fill: var(--info); stroke: #fff; stroke-width: 1.4; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .55)); }
+.sl-pin.on svg { fill: var(--ac); width: 36px; height: 46px; margin: -8px 0 0 -3px; }
+.sl-pin span { position: absolute; left: 34px; top: 4px; white-space: nowrap; background: var(--s1); color: var(--tx); border: 1px solid var(--line2); border-radius: 4px; font: 600 11.5px var(--body); padding: 2px 7px; box-shadow: 0 2px 8px rgba(0, 0, 0, .35); }
+.sl-pin:hover { z-index: 3; }
+.sl-ctl { position: absolute; top: 10px; right: 10px; display: flex; flex-direction: column; gap: 4px; z-index: 5; }
+.sl-ctl button { width: 32px; height: 32px; border-radius: 4px; border: 1px solid var(--line2); background: var(--s1); color: var(--tx); font: 700 18px/1 var(--body); cursor: pointer; } .sl-ctl button:hover { border-color: var(--ac); }
+.sl-attr { position: absolute; right: 0; bottom: 0; z-index: 5; background: rgba(255, 255, 255, .8); color: #333; font: 10.5px var(--body); padding: 1px 6px; pointer-events: none; }
+.pk { display: flex; flex-direction: column; gap: 10px; } .pk > label { font-weight: 600; font-size: 13px; }
+.pk-search .input { flex: 1; } .pk-tools { gap: 8px; }
+.pk-hint { color: var(--tx2); font-size: 12.5px; min-height: 0; } .pk-hint:empty { display: none; } .pk-hint.bad { color: var(--bad); }
+.pk-results { list-style: none; margin: 0; padding: 0; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; } .pk-results[hidden] { display: none; }
+.pk-results button { display: flex; gap: 8px; align-items: center; width: 100%; text-align: left; background: var(--s2); color: var(--tx); border: 0; border-bottom: 1px solid var(--line); padding: 9px 12px; font: 13px var(--body); cursor: pointer; } .pk-results button:hover { background: var(--ac-soft); } .pk-results svg { width: 16px; height: 16px; color: var(--ac); flex: none; }
+.pk-status { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; color: var(--tx2); padding: 9px 12px; border: 1px dashed var(--line2); border-radius: 6px; } .pk-status svg { width: 16px; height: 16px; } .pk-status.ok { border-style: solid; border-color: var(--ok); background: var(--ok-soft); color: var(--tx); }
+.sync-chip { display: inline-flex; align-items: center; gap: 7px; height: 30px; padding: 0 12px; border-radius: 15px; border: 1px solid var(--line2); background: var(--s2); color: var(--tx2); font: 600 12px var(--body); cursor: pointer; } .sync-chip i { width: 8px; height: 8px; border-radius: 50%; background: var(--tx3); }
+.sync-chip.ok i { background: var(--ok); } .sync-chip.wait i { background: var(--warn); animation: pulse 1s infinite; } .sync-chip.bad i { background: var(--bad); } .sync-chip.bad { border-color: var(--bad); }
+@keyframes pulse { 50% { opacity: .3; } }
+.splash { min-height: 100vh; display: grid; place-content: center; justify-items: center; gap: 16px; color: var(--tx2); } .spin { width: 34px; height: 34px; border: 3px solid var(--line2); border-top-color: var(--ac); border-radius: 50%; animation: giro .8s linear infinite; } @keyframes giro { to { transform: rotate(360deg); } }
+@media (max-width: 640px) { .sync-chip { display: none; } .pk-map.tall { height: 340px; } }
+.modal > header { position: sticky; top: 0; z-index: 3; background: var(--s1); } .modal > footer { position: sticky; bottom: 0; z-index: 3; }
+.modal .pk-map { height: 260px; }
