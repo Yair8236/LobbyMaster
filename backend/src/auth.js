@@ -1,4 +1,4 @@
-// LobbyMaster Beta 3 - autenticacion y permisos por rol. Autor: Yair Anibal Mamani Ticona
+// LobbyMaster Beta 4 - autenticacion y permisos por rol. Autor: Yair Anibal Mamani Ticona
 (function (root) {
   // SHA-256 en JavaScript puro (sincrono, funciona tambien abriendo el archivo sin servidor)
   function sha256(text) {
@@ -43,8 +43,8 @@
   const ROLES = { admin: 'Administrador', organizador: 'Organizador', jugador: 'Jugador' };
   // Matriz de permisos: que puede hacer cada rol (el controlador la consulta antes de actuar)
   const PERMS = {
-    admin: ['torneo.crear', 'torneo.gestionar_todos', 'equipo.crear', 'equipo.ver_todos', 'inscribir', 'usuarios.admin', 'catalogos.admin', 'datos.ver'],
-    organizador: ['torneo.crear', 'equipo.crear', 'inscribir'],
+    admin: ['torneo.crear', 'torneo.gestionar_todos', 'equipo.crear', 'equipo.ver_todos', 'inscribir', 'usuarios.admin', 'catalogos.admin', 'sede.crear', 'datos.ver'],
+    organizador: ['torneo.crear', 'sede.crear', 'equipo.crear', 'inscribir'],
     jugador: ['equipo.crear', 'inscribir']
   };
   const can = (user, perm) => !!user && (PERMS[user.rol] || []).includes(perm);
