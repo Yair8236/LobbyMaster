@@ -1,0 +1,17 @@
+# Integración continua de LobbyMaster · Autor: Yair Anibal Mamani Ticona
+name: CI
+on:
+  push:
+  pull_request:
+jobs:
+  pruebas:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Pruebas del motor de brackets
+        run: node tests/bracket.test.js
+      - name: Pruebas de reglas de negocio
+        run: node tests/store.test.js

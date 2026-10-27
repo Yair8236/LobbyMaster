@@ -1,0 +1,13 @@
+Summary,Issue Type,Description,Priority,Story point estimate,Sprint,Status,Labels
+HU-01 Registrar usuario,Story,"Como jugador quiero registrarme con usuario, correo y contraseña para participar en torneos.",Highest,3,Sprint 1,Done,must
+HU-02 Iniciar sesión con roles,Story,"Como usuario quiero iniciar sesión y ver las opciones de mi rol (admin, organizador, jugador).",Highest,2,Sprint 1,Done,must
+HU-03 Crear torneo,Story,"Como organizador quiero crear un torneo con juego, sede, fecha y cupos para recibir inscripciones.",Highest,3,Sprint 2,Done,must
+HU-04 Inscribir equipo,Story,"Como capitán quiero inscribir mi equipo en un torneo abierto para competir.",Highest,5,Sprint 2,Done,must
+HU-05 Aprobar inscripciones,Story,"Como organizador quiero aprobar o rechazar inscripciones para controlar los cupos.",High,2,Sprint 3,Done,must
+HU-06 Generar bracket automático,Story,"Como organizador quiero generar el bracket automáticamente para no armar los cruces a mano.",High,5,Sprint 3,Done,must
+HU-07 Registrar marcador con avance,Story,"Como organizador quiero registrar el marcador y que el ganador avance a la siguiente ronda.",High,5,Sprint 4,In Progress,must
+HU-08 Campeón y estadísticas,Story,"Como jugador quiero ver el campeón y las estadísticas del torneo.",Medium,3,Sprint 4,In Review,should
+HU-09 Mapa de sedes,Story,"Como jugador quiero ver las sedes en un mapa para saber dónde se juega.",Medium,3,Sprint 5,To Do,should
+HU-10 Gestión de usuarios,Story,"Como administrador quiero gestionar usuarios y roles para mantener el control de la plataforma.",Medium,3,Sprint 5,To Do,should
+HU-11 Historial y panel del organizador,Story,"Como organizador quiero un panel con mis torneos e historial para dar seguimiento.",Low,5,Sprint 6,To Do,could
+Pruebas finales documentación y defensa,Task,"Pruebas de aceptación, documentación final y defensa del proyecto.",Medium,5,Sprint 6,To Do,cierre
