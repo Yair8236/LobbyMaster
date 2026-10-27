@@ -59,3 +59,17 @@ También se ve en GitHub: *Insights → Contributors*, issues asignadas y pull r
 3. Se escribe primero la prueba y luego el código (TDD), con commits pequeños: `feat(...)`, `test(...)`.
 4. Se abre el *Pull Request* con la plantilla; la integración continua corre las pruebas.
 5. Se une a `develop`, se mueve a **Hecho** y, al cerrar el sprint, se etiqueta la versión.
+
+## Roles XP y responsabilidades
+
+En XP los roles son flexibles y pueden rotar. Como el proyecto es individual, **Yair Anibal Mamani Ticona** asume todos, uno a la vez y con su evidencia:
+
+| Rol XP | Responsabilidad | Evidencia |
+|---|---|---|
+| Cliente | Definir y priorizar las historias de usuario (HU-01 a HU-11) | `docs/LobbyMaster_Jira_Import.csv`, tablero |
+| Programador | Implementar por ramas `feature/*` con commits pequeños | Historial de Git, ramas y etiquetas |
+| Tester | Escribir pruebas (en el bracket, primero la prueba) | `tests/` e integración continua |
+| Tracker | Llevar el tablero, los puntos por sprint y el límite de trabajo en curso (WIP = 1) | Este documento |
+| Coach | Fijar reglas de ramas, commits y pull requests, y mantener la documentación | `CONTRIBUTING.md`, `docs/` |
+
+Limitación honesta: al ser un solo integrante no hay rotación real entre personas ni revisión de código por un compañero; la revisión se apoya en la lista de verificación del pull request, las pruebas y la integración continua.
