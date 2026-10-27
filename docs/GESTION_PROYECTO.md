@@ -24,8 +24,8 @@ Estado actual (Sprint 4 en curso, 20 de 44 puntos):
 |---|---|
 | Hecho | HU-01, HU-02, HU-03, HU-04, HU-05, HU-06 |
 | En curso | HU-07 Marcador con avance de ronda |
-| En revisión | HU-08 Campeón y estadísticas |
-| Por hacer | HU-09, HU-10, HU-11, T-12 |
+| En revisión | HU-08 Campeón y estadísticas · HU-09 Mapa de sedes (mapa con OpenStreetMap y Google Maps) |
+| Por hacer | HU-10, HU-11, pruebas finales y defensa |
 
 ## 3. Trazabilidad: historia → rama → versión
 
@@ -38,7 +38,9 @@ Estado actual (Sprint 4 en curso, 20 de 44 puntos):
 | Integración continua | S3 | `feature/ci-pruebas` | v0.3.0 | Hecho |
 | Manual de usuario, guía y plantillas | S4 | `docs/manual-y-gestion` | v0.3.0 | Hecho |
 | HU-07 Marcador · HU-08 Campeón y estadísticas | S4 | `develop` (en revisión) | — | En curso |
-| HU-09 Mapa · HU-10 Usuarios admin · HU-11 Historial | S5–S6 | — | — | Pendiente (hay adelantos en la beta) |
+| HU-09 Mapa de sedes | S5 | `feature/sedes-mapa` | v0.4.0 | En revisión |
+| Base de datos en Supabase | S5 | `feature/supabase-bd` | v0.4.0 | En revisión |
+| HU-10 Usuarios admin · HU-11 Historial | S5–S6 | — | — | Pendiente (hay adelantos en la beta) |
 
 ## 4. Participación individual
 
