@@ -19,7 +19,7 @@ ok('registro valida y no repite', () => {
   assert.strictEqual(u.rol, 'jugador', 'el registro publico nunca crea administradores');
 });
 ok('datos de demostracion consistentes', () => {
-  const t = db.tables(); assert.strictEqual(Object.keys(t).length, 9);
+  const t = db.tables(); assert.strictEqual(Object.keys(t).length, 10);
   const r = db.resumen(); assert.strictEqual(r.torneos, 5); assert.strictEqual(r.finalizados, 1); assert.strictEqual(r.en_curso, 1);
   const T1 = db.listTorneos().find(x => x.nombre === 'Copa Illimani Valorant'), b = db.getBracket(T1.id_torneo);
   assert.ok(b.campeon, 'T1 tiene campeon'); assert.strictEqual(b.total, 3); assert.deepStrictEqual(b.nombres, ['Cuartos de final', 'Semifinal', 'Final']);
@@ -105,5 +105,40 @@ ok('sedes: ubicacion elegida en el mapa, permisos y direccion', () => {
   assert.strictEqual(s2.direccion, null); assert.strictEqual(s2.enlace_maps, null, 'solo se aceptan enlaces http(s)');
   throwsMsg(() => db.updateSede(org, s.id_sede, base), /permiso/); db.updateSede(admin, s.id_sede, Object.assign({}, base, { nombre: 'Sede Maps 2' }));
   assert.strictEqual(db.listSedes().find(x => x.id_sede === s.id_sede).nombre, 'Sede Maps 2');
+});
+ok('solicitudes de ingreso: reglas y flujo', () => {
+  const cap = db.login('jugador', 'Jugador2026'), wayna = db.login('wayna_pro', 'Jugador2026'), nuevo = db.login('nuevo_1', 'Clave1234');
+  const illimani = db.listTeams({ captainId: cap.id_usuario })[0];
+  assert.strictEqual(db.listSolicitudes({ teamIds: [illimani.id_equipo], estado: 'pendiente' }).length, 2, 'la semilla trae 2 pendientes');
+  throwsMsg(() => db.solicitarIngreso(cap, illimani.id_equipo, 'Yo'), /capitán/);
+  throwsMsg(() => db.solicitarIngreso(nuevo, illimani.id_equipo, 'x'), /entre 2 y 30/);
+  throwsMsg(() => db.solicitarIngreso(nuevo, illimani.id_equipo, illimani.jugadores[0].toUpperCase()), /ya está en el roster/);
+  throwsMsg(() => db.solicitarIngreso(wayna, illimani.id_equipo, 'Otro_Apodo'), /pendiente/);
+  const s = db.solicitarIngreso(nuevo, illimani.id_equipo, '  Nuevo   Uno ');
+  assert.strictEqual(s.estado, 'pendiente'); assert.strictEqual(s.nickname, 'Nuevo Uno'); assert.strictEqual(s.equipo, 'Illimani eSports');
+  throwsMsg(() => db.resolverSolicitud(nuevo, s.id_solicitud, 'aceptada'), /capitán/);
+  throwsMsg(() => db.resolverSolicitud(cap, s.id_solicitud, 'cualquiera'), /no válido/);
+  assert.strictEqual(db.getTeam(illimani.id_equipo).jugadores.length, 5);
+  db.resolverSolicitud(cap, s.id_solicitud, 'aceptada');
+  assert.ok(db.getTeam(illimani.id_equipo).jugadores.includes('Nuevo Uno'), 'al aceptar entra al roster');
+  throwsMsg(() => db.resolverSolicitud(cap, s.id_solicitud, 'rechazada'), /ya fue respondida/);
+  const w = db.listSolicitudes({ userId: wayna.id_usuario })[0];
+  db.resolverSolicitud(cap, w.id_solicitud, 'rechazada');
+  assert.ok(!db.getTeam(illimani.id_equipo).jugadores.includes(w.nickname), 'al rechazar no entra al roster');
+  // cancelar: solo quien la envio y solo si esta pendiente
+  const sj = db.listSolicitudes({ userId: db.login('sajama_clan', 'Jugador2026').id_usuario })[0];
+  throwsMsg(() => db.cancelarSolicitud(nuevo, sj.id_solicitud), /Solo quien/);
+  db.cancelarSolicitud(db.login('sajama_clan', 'Jugador2026'), sj.id_solicitud);
+  assert.strictEqual(db.listSolicitudes({ teamIds: [illimani.id_equipo], estado: 'pendiente' }).length, 0);
+  // roster completo: no se puede solicitar ni aceptar
+  const u1 = db.register({ nombre_usuario: 'cap_lleno', correo: 'lleno@x.bo', password: 'Clave1234' }), c1 = db.login('cap_lleno', 'Clave1234');
+  const lleno = db.createTeam(c1, { nombre: 'Equipo Lleno', jugadores: ['a1', 'a2', 'a3', 'a4', 'a5', 'a6', 'a7', 'a8'] });
+  throwsMsg(() => db.solicitarIngreso(nuevo, lleno.id_equipo, 'Tarde'), /completo/);
+  // eliminar el equipo elimina sus solicitudes; admin puede responder cualquier solicitud
+  const corto = db.createTeam(c1, { nombre: 'Equipo Corto', jugadores: ['b1', 'b2'] }), s3 = db.solicitarIngreso(nuevo, corto.id_equipo, 'Entrante');
+  db.resolverSolicitud(admin, s3.id_solicitud, 'aceptada'); assert.ok(db.getTeam(corto.id_equipo).jugadores.includes('Entrante'));
+  const s4 = db.solicitarIngreso(wayna, corto.id_equipo, 'Segundo'); db.deleteTeam(c1, corto.id_equipo);
+  assert.strictEqual(db.listSolicitudes({ userId: wayna.id_usuario }).filter(x => x.id_solicitud === s4.id_solicitud).length, 0);
+  void u1;
 });
 console.log('Pruebas del modelo: ' + n + ' grupos OK');

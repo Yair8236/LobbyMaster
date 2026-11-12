@@ -1,4 +1,4 @@
--- LobbyMaster · modelo de datos (9 tablas) · MySQL 8
+-- LobbyMaster · modelo de datos (10 tablas) · MySQL 8
 -- Autor: Yair Anibal Mamani Ticona
 CREATE TABLE usuarios (
   id_usuario      INT AUTO_INCREMENT PRIMARY KEY,
@@ -53,6 +53,18 @@ CREATE TABLE jugadores_roster (
   id_equipo INT         NOT NULL,
   nickname  VARCHAR(30) NOT NULL,
   CONSTRAINT fk_roster_equipo FOREIGN KEY (id_equipo) REFERENCES equipos (id_equipo) ON DELETE CASCADE
+);
+
+CREATE TABLE solicitudes_ingreso (
+  id_solicitud    INT AUTO_INCREMENT PRIMARY KEY,
+  id_equipo       INT         NOT NULL,
+  id_usuario      INT         NOT NULL,
+  nickname        VARCHAR(30) NOT NULL,
+  estado          VARCHAR(10) NOT NULL DEFAULT 'pendiente',
+  fecha_solicitud VARCHAR(19) NOT NULL,
+  CONSTRAINT ck_solicitud_estado CHECK (estado IN ('pendiente', 'aceptada', 'rechazada')),
+  CONSTRAINT fk_solicitud_equipo  FOREIGN KEY (id_equipo)  REFERENCES equipos (id_equipo)   ON DELETE CASCADE,
+  CONSTRAINT fk_solicitud_usuario FOREIGN KEY (id_usuario) REFERENCES usuarios (id_usuario) ON DELETE CASCADE
 );
 
 CREATE TABLE inscripciones (

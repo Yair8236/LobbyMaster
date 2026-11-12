@@ -6,7 +6,7 @@
 (function (root) {
   const cfg = root.LOBBY_CONFIG || {};
   // orden respetando llaves foraneas: primero los padres
-  const ORDER = ['usuarios', 'juegos', 'sedes_mapa', 'torneos', 'equipos', 'jugadores_roster', 'inscripciones', 'enfrentamientos_brackets', 'resultados', 'bitacora'];
+  const ORDER = ['usuarios', 'juegos', 'sedes_mapa', 'torneos', 'equipos', 'jugadores_roster', 'solicitudes_ingreso', 'inscripciones', 'enfrentamientos_brackets', 'resultados', 'bitacora'];
   const PK = { bitacora: 'id_bitacora' };
   const pkOf = (t, SCHEMA) => PK[t] || SCHEMA[t].pk;
 

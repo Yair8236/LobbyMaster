@@ -33,13 +33,44 @@
     modal({ title: 'Historial · ' + team.nombre, wide: true, body: hs.length ? h('div', { class: 'tbl-wrap' }, h('table', { class: 'tbl' }, h('thead', null, h('tr', null, ['Torneo', 'Ronda', 'Rival', 'Marcador', 'Resultado'].map(x => h('th', null, x)))),
       h('tbody', null, hs.map(x => h('tr', null, h('td', null, h('b', null, x.torneo), h('div', { class: 'dim', style: { fontSize: '12px' } }, fmtDate(x.fecha))), h('td', null, x.ronda), h('td', null, x.rival), h('td', { class: 'num' }, x.pf + ' – ' + x.pc), h('td', null, h('span', { class: 'chip ' + (x.gano ? 'ok' : 'bad') }, x.gano ? 'Victoria' : 'Derrota'))))))) : empty('flag', 'Sin partidas', 'Este equipo todavía no ha jugado cruces.'), actions: [{ label: 'Cerrar', cls: 'pri' }] });
   }
+  // ---------- solicitudes de ingreso a un equipo ----------
+  function joinForm(ctx, team) {
+    const { db, user } = ctx;
+    const fK = field({ label: 'Tu apodo en el equipo', name: 'nickname', placeholder: 'Ej. ' + user.nombre_usuario, maxlength: 30, hint: 'Es el nombre con el que aparecerás en el roster si el capitán te acepta.' });
+    const form = h('form', { class: 'form', novalidate: true }, h('div', { class: 'alert' }, 'El capitán de «' + team.nombre + '» (' + team.capitan + ') recibirá tu solicitud y decidirá si te acepta.'), fK.el);
+    const send = () => { try { db.solicitarIngreso(user, team.id_equipo, fK.value); toast('Solicitud enviada a ' + team.capitan, 'ok'); m.close(); ctx.refresh(); } catch (e) { if (e.name !== 'VErr') throw e; if (e.fields.nickname) fK.error(e.fields.nickname); else toast(e.message, 'bad'); } };
+    form.addEventListener('submit', e => { e.preventDefault(); send(); });
+    const m = modal({ title: 'Solicitar ingreso · ' + team.nombre, body: form, actions: [{ label: 'Cancelar', cls: 'ghost' }, { label: 'Enviar solicitud', cls: 'pri', onClick: () => { send(); return false; }, keep: true }] });
+  }
+  function solicitudesRecibidas(ctx, teamIds) {
+    const { db, user } = ctx, list = db.listSolicitudes({ teamIds });
+    if (!list.length) return null;
+    const act = (id, est, ok) => V.run(ctx, () => db.resolverSolicitud(user, id, est), ok);
+    return h('section', { class: 'panel mt' }, h('header', null, icon('user'), h('h3', null, 'Solicitudes de ingreso a mis equipos'), h('span', { class: 'sp dim' }, list.filter(s => s.estado === 'pendiente').length + ' pendiente(s)')),
+      h('div', { class: 'tbl-wrap' }, h('table', { class: 'tbl' }, h('thead', null, h('tr', null, ['Jugador', 'Apodo', 'Equipo', 'Fecha', 'Estado', ''].map(x => h('th', null, x)))),
+        h('tbody', null, list.map(s => h('tr', null, h('td', null, h('b', null, s.solicitante)), h('td', null, s.nickname), h('td', null, s.equipo), h('td', { class: 'dim' }, s.fecha_solicitud.slice(0, 16)), h('td', null, chip(s.estado)),
+          h('td', { style: { textAlign: 'right', whiteSpace: 'nowrap' } }, s.estado === 'pendiente' ? [h('button', { class: 'btn sm pri', onclick: () => act(s.id_solicitud, 'aceptada', 'Jugador agregado al roster') }, 'Aceptar'), ' ', h('button', { class: 'btn sm danger', onclick: () => act(s.id_solicitud, 'rechazada', 'Solicitud rechazada') }, 'Rechazar')] : null)))))));
+  }
+  function unirseAEquipos(ctx) {
+    const { db, user } = ctx, mias = db.listSolicitudes({ userId: user.id_usuario });
+    const libres = db.listTeams().filter(t => t.id_capitan !== user.id_usuario && t.jugadores.length < db.ROSTER_MAX);
+    const pend = new Set(mias.filter(s => s.estado === 'pendiente').map(s => s.id_equipo));
+    const out = [];
+    out.push(h('section', { class: 'panel mt' }, h('header', null, icon('users'), h('h3', null, 'Unirme a un equipo'), h('span', { class: 'sp dim' }, 'Envía una solicitud y el capitán decide')),
+      libres.length ? h('div', { class: 'body stack' }, libres.map(t => h('div', { class: 'row' }, teamBadge(t.nombre, 'lg'), h('div', { class: 'grow' }, h('b', null, t.nombre), h('div', { class: 'dim', style: { fontSize: '12.5px' } }, 'Capitán: ' + t.capitan + ' · ' + t.jugadores.length + ' / ' + db.ROSTER_MAX + ' jugadores')),
+        pend.has(t.id_equipo) ? chip('pendiente', 'Solicitud enviada') : h('button', { class: 'btn sm', onclick: () => joinForm(ctx, t) }, icon('plus'), 'Solicitar ingreso')))) : empty('users', 'No hay equipos con cupo', 'Todos los equipos tienen su roster completo.')));
+    if (mias.length) out.push(h('section', { class: 'panel mt' }, h('header', null, icon('clock'), h('h3', null, 'Mis solicitudes')),
+      h('div', { class: 'body stack' }, mias.map(s => h('div', { class: 'row' }, h('div', { class: 'grow' }, h('b', null, s.equipo), h('div', { class: 'dim', style: { fontSize: '12.5px' } }, 'Como «' + s.nickname + '» · ' + s.fecha_solicitud.slice(0, 16))), chip(s.estado),
+        s.estado === 'pendiente' ? h('button', { class: 'btn sm ghost', onclick: () => V.run(ctx, () => db.cancelarSolicitud(user, s.id_solicitud), 'Solicitud cancelada') }, 'Cancelar') : null)))));
+    return out;
+  }
   V.equipos = ctx => {
     const { db, user } = ctx, all = Auth.can(user, 'equipo.ver_todos'), teams = all ? db.listTeams() : db.listTeams({ captainId: user.id_usuario });
     const rk = Object.fromEntries(db.ranking().map(r => [r.id_equipo, r]));
     const root_ = h('div');
     root_.appendChild(h('div', { class: 'page-head' }, h('div', null, h('h1', null, all ? 'Equipos' : 'Mis equipos'), h('p', null, all ? 'Todos los equipos registrados en la plataforma.' : 'Administra tu equipo y su roster. Solo el capitán puede inscribirlo en torneos.')), h('div', { class: 'sp' }, Auth.can(user, 'equipo.crear') ? h('button', { class: 'btn pri', onclick: () => teamForm(ctx) }, icon('plus'), 'Nuevo equipo') : null)));
-    if (!teams.length) { root_.appendChild(h('div', { class: 'panel' }, empty('users', 'Aún no tienes equipos', 'Crea tu equipo con al menos ' + db.ROSTER_MIN + ' jugadores para inscribirte en torneos.', h('button', { class: 'btn pri', onclick: () => teamForm(ctx) }, icon('plus'), 'Crear equipo')))); return root_; }
-    root_.appendChild(h('div', { class: 'grid g3' }, teams.map(t => {
+    if (!teams.length) root_.appendChild(h('div', { class: 'panel' }, empty('users', 'Aún no tienes equipos', 'Crea tu equipo con al menos ' + db.ROSTER_MIN + ' jugadores para inscribirte en torneos.', h('button', { class: 'btn pri', onclick: () => teamForm(ctx) }, icon('plus'), 'Crear equipo'))));
+    else root_.appendChild(h('div', { class: 'grid g3' }, teams.map(t => {
       const r = rk[t.id_equipo], mine = t.id_capitan === user.id_usuario || all;
       return h('article', { class: 'panel', style: { padding: '18px', display: 'flex', flexDirection: 'column', gap: '14px' } },
         h('div', { class: 'row' }, teamBadge(t.nombre, 'lg'), h('div', { class: 'grow', style: { minWidth: 0 } }, h('h3', null, t.nombre), h('div', { class: 'dim', style: { fontSize: '12.5px' } }, 'Capitán: ' + t.capitan))),
@@ -48,6 +79,8 @@
         h('div', { class: 'row', style: { marginTop: 'auto' } }, h('button', { class: 'btn sm', onclick: () => historyModal(ctx, t) }, icon('flag'), 'Historial'),
           mine ? [h('button', { class: 'btn sm', onclick: () => teamForm(ctx, t) }, icon('edit'), 'Editar'), h('button', { class: 'btn sm danger sp', 'aria-label': 'Eliminar equipo', onclick: async () => { if (await confirmBox({ title: 'Eliminar equipo', message: '¿Eliminar «' + t.nombre + '»?', confirm: 'Eliminar', danger: true })) { try { db.deleteTeam(user, t.id_equipo); toast('Equipo eliminado', 'ok'); ctx.refresh(); } catch (e) { toast(e.message, 'bad'); } } } }, icon('trash'))] : null));
     })));
+    const rec = solicitudesRecibidas(ctx, teams.map(t => t.id_equipo)); if (rec) root_.appendChild(rec);
+    if (!all) unirseAEquipos(ctx).forEach(x => root_.appendChild(x));
     return root_;
   };
 
