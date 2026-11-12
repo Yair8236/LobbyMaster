@@ -31,7 +31,7 @@ Estado actual (Sprint 4 en curso, 20 de 44 puntos):
 
 | Historia | Sprint | Rama de trabajo | Versión | Estado |
 |---|---|---|---|---|
-| Modelo de datos (9 tablas) | S1 | `feature/modelo-datos` | v0.1.0 | Hecho |
+| Modelo de datos (10 tablas) | S1 | `feature/modelo-datos` | v0.1.0 | Hecho |
 | HU-01 Registrar usuario · HU-02 Iniciar sesión con roles | S1 | `feature/HU-01-02-registro-login` | v0.1.0 | Hecho |
 | HU-03 Crear torneo · HU-04 Inscribir equipo · HU-05 Aprobar inscripciones | S2–S3 | `feature/HU-03-04-05-torneos-inscripciones` | v0.2.0 | Hecho |
 | HU-06 Generar bracket automático | S3 | `feature/HU-06-bracket` | v0.3.0 | Hecho |

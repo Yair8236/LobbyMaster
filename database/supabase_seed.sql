@@ -166,6 +166,10 @@ INSERT INTO resultados (id_resultado, id_enfrentamiento, puntaje_a, puntaje_b, r
 (9, 9, 0, 2, 2, '2026-10-24 12:00:00'),
 (10, 12, 2, 0, 2, '2026-10-24 12:00:00'),
 (11, 10, 2, 0, 2, '2026-10-24 12:00:00');
+INSERT INTO solicitudes_ingreso (id_solicitud, id_equipo, id_usuario, nickname, estado, fecha_solicitud)
+SELECT v.id, 1, u.id_usuario, v.nick, v.est, '2026-10-25 12:00:00'
+FROM (VALUES (1, 'wayna_pro', 'Wayna_Fox', 'pendiente'), (2, 'sajama_clan', 'Sajama_Zero', 'pendiente'), (3, 'titi_lake', 'Lago_Azul', 'rechazada')) AS v(id, usr, nick, est)
+JOIN usuarios u ON u.nombre_usuario = v.usr;
 INSERT INTO bitacora (id_bitacora, fecha, usuario, mensaje) VALUES
 (1, '2026-10-26 12:00:00', 'sistema', 'Datos de demostración cargados');
 COMMIT;

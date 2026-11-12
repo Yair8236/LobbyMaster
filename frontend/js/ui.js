@@ -76,7 +76,7 @@
   const initials = n => { const p = String(n).trim().split(/\s+/); return (p.length > 1 ? p[0][0] + p[1][0] : String(n).slice(0, 2)).toUpperCase(); };
   function teamBadge(name, size) { return h('span', { class: 'badge-team ' + (size || ''), style: { background: 'hsl(' + hue(name) + ' 46% 38%)' }, title: name }, initials(name)); }
   function avatar(name) { return h('span', { class: 'avatar', style: { background: 'hsl(' + hue(name) + ' 40% 34%)' } }, String(name).slice(0, 2).toUpperCase()); }
-  const ESTADO = { abierto: ['ok', 'Abierto'], en_curso: ['warn', 'En curso'], finalizado: ['mute', 'Finalizado'], pendiente: ['warn', 'Pendiente'], aprobado: ['ok', 'Aprobado'], rechazado: ['bad', 'Rechazado'] };
+  const ESTADO = { abierto: ['ok', 'Abierto'], en_curso: ['warn', 'En curso'], finalizado: ['mute', 'Finalizado'], pendiente: ['warn', 'Pendiente'], aprobado: ['ok', 'Aprobado'], rechazado: ['bad', 'Rechazado'], aceptada: ['ok', 'Aceptada'], rechazada: ['bad', 'Rechazada'] };
   const chip = (e, text) => h('span', { class: 'chip ' + (ESTADO[e] ? ESTADO[e][0] : 'mute') }, text || (ESTADO[e] ? ESTADO[e][1] : e));
   const ROLCHIP = { admin: ['ac', 'Administrador'], organizador: ['info', 'Organizador'], jugador: ['mute', 'Jugador'] };
   const rolChip = r => h('span', { class: 'chip plain ' + ROLCHIP[r][0] }, ROLCHIP[r][1]);

@@ -1,8 +1,8 @@
 # Manual de usuario · LobbyMaster
 
-**Autor:** Yair Anibal Mamani Ticona · **Versión del sistema:** 0.4.0 (Beta 4) · **Proyecto de Sistemas I, gestión 2-2026**
+**Autor:** Yair Anibal Mamani Ticona · **Versión del sistema:** 1.0.0 (versión final) · **Proyecto de Sistemas I, gestión 2-2026**
 
-Este manual explica cómo usar LobbyMaster paso a paso. Cubre lo que está disponible en la Beta 4 y crecerá con cada sprint.
+Este manual explica cómo usar LobbyMaster paso a paso. Cubre todo lo disponible en la versión final.
 
 ---
 
@@ -94,7 +94,14 @@ Las cuentas nuevas son de **jugador**. Solo un administrador puede cambiar el ro
 
 Reglas: solo el capitán inscribe; un equipo no se inscribe dos veces en el mismo torneo ni en dos torneos el mismo día.
 
-### 6.3 Ver el bracket, ranking y estadísticas
+### 6.3 Unirte al equipo de otra persona
+1. Entra a **Mis equipos** y baja hasta **Unirme a un equipo**: aparecen los equipos que aún tienen lugar en su roster (máximo 8 jugadores).
+2. Pulsa **Solicitar ingreso**, escribe el apodo con el que quieres aparecer y envía la solicitud.
+3. En **Mis solicitudes** ves si está **Pendiente**, **Aceptada** o **Rechazada**. Mientras esté pendiente puedes **Cancelarla**.
+
+Si eres capitán, las solicitudes a tu equipo aparecen en **Solicitudes de ingreso a mis equipos** (y una insignia en el menú te avisa cuántas esperan). Pulsa **Aceptar** para sumar al jugador al roster o **Rechazar** para descartarla. No se acepta si el roster ya tiene 8 jugadores o si el apodo ya existe en el equipo.
+
+### 6.4 Ver el bracket, ranking y estadísticas
 - Dentro de cada torneo, la pestaña **Bracket** muestra el cuadro de partidas y la pestaña **Estadísticas** los resultados del torneo.
 - **Ranking** muestra los equipos con más títulos, victorias y efectividad.
 
@@ -186,9 +193,9 @@ Editar o eliminar una sede es solo para el administrador. El mapa y la búsqueda
 
 ## 11. Alcance de esta versión
 
-Disponible hoy: registro e ingreso con roles, torneos, inscripciones, bracket automático, resultados, campeón, estadísticas, ranking, **sedes con mapa y Google Maps** y **base de datos en la nube (Supabase)**, además de la administración.
+Disponible hoy: registro e ingreso con roles, torneos, inscripciones, **solicitudes de ingreso a equipos**, bracket automático, resultados, campeón, estadísticas, ranking, **sedes con mapa y Google Maps** y **base de datos en la nube (Supabase)**, además de la administración.
 
-Limitaciones conocidas: la base está abierta para fines académicos, por lo que las cuentas de demostración no deben usar contraseñas reales; la recuperación de contraseña por correo y el panel avanzado del organizador quedan para próximos sprints.
+Limitaciones conocidas: la base está abierta para fines académicos, por lo que las cuentas de demostración no deben usar contraseñas reales; la recuperación de contraseña por correo y la autorización por usuario con Supabase Auth quedan como trabajo futuro.
 
 ---
-*Manual elaborado por Yair Anibal Mamani Ticona · LobbyMaster v0.4.0*
+*Manual elaborado por Yair Anibal Mamani Ticona · LobbyMaster v1.0.0*

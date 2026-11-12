@@ -2,10 +2,17 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y versionado semántico.
 
-## [Sin publicar]
-### En curso (Sprint 4)
-- HU-07: marcador con avance de ronda (en revisión).
-- HU-08: campeón y estadísticas (en revisión).
+## [1.0.0] · Versión final
+### Agregado
+- **Solicitudes de ingreso a equipos**: nueva tabla `solicitudes_ingreso` (10 tablas en total), reglas de negocio, pantalla en *Mis equipos* (capitán: aceptar / rechazar; jugador: solicitar y cancelar) e insignia con las solicitudes pendientes en el menú.
+- Endurecimiento de la base de datos en Supabase: reglas dentro de la base (último administrador, máximo de 8 jugadores por equipo, cupos del torneo) y menos privilegios para la clave pública (`database/supabase_endurecimiento.sql`).
+- Pruebas de las solicitudes de ingreso (`tests/store.test.js`, 12 grupos).
+### Cambiado
+- El **tema claro** es ahora el predeterminado (se puede cambiar al oscuro con el botón de la barra superior).
+- Diagrama entidad-relación, diccionario de datos y normalización actualizados a 10 tablas.
+- HU-07, HU-08, HU-09, HU-10 y HU-11 quedan cerradas en esta versión.
+### Limitación conocida (INC-03)
+- La web usa la clave pública de Supabase con políticas de acceso abiertas (proyecto académico). Cerrarlo por completo requiere Supabase Auth; queda como trabajo futuro.
 
 ## [0.4.0] · Beta 4
 ### Agregado
