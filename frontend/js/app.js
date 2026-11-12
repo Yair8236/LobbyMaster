@@ -7,11 +7,11 @@
   const mem = {}, memory = { getItem: k => (k in mem ? mem[k] : null), setItem: (k, v) => { mem[k] = String(v); }, removeItem: k => { delete mem[k]; } };
   let storage = memory; try { localStorage.setItem('_t', '1'); localStorage.removeItem('_t'); storage = localStorage; } catch (e) { /* modo memoria */ }
   const db = root.Store.create(storage, { onSave: () => { if (root.Sync) root.Sync.schedule(); } });
-  const SES = 'lobbymaster.sesion', TEMA = 'lobbymaster.tema';
+  const SES = 'lobbymaster.sesion', TEMA = 'lobbymaster.tema.v2';
   const app = document.getElementById('app');
   let sidebarOpen = false;
 
-  const theme = () => { try { return storage.getItem(TEMA) || 'dark'; } catch (e) { return 'dark'; } };
+  const theme = () => { try { return storage.getItem(TEMA) || 'light'; } catch (e) { return 'light'; } };
   const setTheme = t => { document.documentElement.setAttribute('data-theme', t); try { storage.setItem(TEMA, t); } catch (e) { /* sin persistencia */ } };
   setTheme(theme());
 
@@ -69,8 +69,8 @@
     app.appendChild(h('div', { class: 'auth' },
       h('div', { class: 'auth-art' }, artSvg(), h('div', { class: 'row', style: { position: 'relative' } }, brandMark(), h('div', null, h('b', { style: { font: '700 22px var(--display)', letterSpacing: '.1em', color: '#e8ecf4' } }, 'LOBBYMASTER'))),
         h('div', null, h('h1', { style: { color: '#e8ecf4' } }, 'Tu torneo, ', h('em', null, 'bien armado.')), h('p', null, 'Inscripciones, brackets automáticos y estadísticas para la comunidad eSports de La Paz y El Alto, en un solo lugar.'),
-          h('div', { class: 'stats' }, [['9', 'tablas normalizadas'], ['3', 'roles de usuario'], ['4–32', 'equipos por torneo']].map(([a, b]) => h('div', null, h('b', null, a), h('span', null, b))))),
-        h('div', { class: 'foot' }, 'Proyecto universitario · Yair Anibal Mamani Ticona · Beta 4')),
+          h('div', { class: 'stats' }, [['10', 'tablas normalizadas'], ['3', 'roles de usuario'], ['4–32', 'equipos por torneo']].map(([a, b]) => h('div', null, h('b', null, a), h('span', null, b))))),
+        h('div', { class: 'foot' }, 'Proyecto universitario · Yair Anibal Mamani Ticona · v1.0')),
       h('div', { class: 'auth-form' }, box)));
   }
   function brandMark() {
@@ -83,7 +83,8 @@
   // ---------- estructura ----------
   function navItems(user) {
     const pend = user.rol === 'jugador' ? 0 : db.listTorneos().filter(t => Auth.canManageTorneo(user, t) && t.estado === 'abierto').reduce((s, t) => s + t.pendientes, 0);
-    const items = [['Principal'], ['inicio', 'home', 'Inicio', pend], ['torneos', 'trophy', 'Torneos'], ['equipos', 'users', user.rol === 'admin' ? 'Equipos' : 'Mis equipos'], ['sedes', 'map', 'Sedes y mapa'], ['ranking', 'chart', 'Ranking'], ['Sistema'], ['modelo', 'db', 'Modelo de datos']];
+    const solPend = db.listSolicitudes({ teamIds: db.listTeams({ captainId: user.id_usuario }).map(t => t.id_equipo), estado: 'pendiente' }).length;
+    const items = [['Principal'], ['inicio', 'home', 'Inicio', pend], ['torneos', 'trophy', 'Torneos'], ['equipos', 'users', user.rol === 'admin' ? 'Equipos' : 'Mis equipos', solPend], ['sedes', 'map', 'Sedes y mapa'], ['ranking', 'chart', 'Ranking'], ['Sistema'], ['modelo', 'db', 'Modelo de datos']];
     if (Auth.can(user, 'usuarios.admin')) items.splice(7, 0, ['admin', 'shield', 'Administración']);
     return items;
   }
@@ -118,7 +119,7 @@
       else view = V.inicio(ctx);
     } catch (e) { console.error(e); view = h('div', { class: 'alert bad' }, 'Ocurrió un error al mostrar esta pantalla. Recarga la página o restaura los datos desde Administración.'); }
     const side = h('aside', { class: 'side' + (sidebarOpen ? ' open' : ''), 'aria-label': 'Navegación principal' },
-      h('div', { class: 'brand' }, brandMark(), h('div', null, h('b', null, 'LobbyMaster'), h('small', null, 'Beta 4'))),
+      h('div', { class: 'brand' }, brandMark(), h('div', null, h('b', null, 'LobbyMaster'), h('small', null, 'v1.0'))),
       h('nav', { class: 'nav' }, navItems(user).map(it => it.length === 1 ? h('h6', null, it[0]) : h('a', { href: '#/' + it[0], class: name === it[0] ? 'on' : '', onclick: () => { sidebarOpen = false; } }, icon(it[1]), it[2], it[3] ? h('span', { class: 'badge', 'aria-label': it[3] + ' pendientes' }, it[3]) : null))),
       h('div', { class: 'me' }, avatar(user.nombre_usuario), h('div', { class: 'who grow' }, h('b', null, user.nombre_usuario), rolChip(user.rol)), h('button', { class: 'btn ghost icon', title: 'Cerrar sesión', 'aria-label': 'Cerrar sesión', onclick: () => { storage.removeItem(SES); toast('Sesión cerrada'); go('inicio'); render(); } }, icon('logout'))));
     const top = h('header', { class: 'top' }, h('button', { class: 'btn ghost icon menu-btn', 'aria-label': 'Abrir menú', onclick: () => { sidebarOpen = !sidebarOpen; side.classList.toggle('open', sidebarOpen); } }, icon('menu')), h('div', { class: 'crumbs' }, 'LobbyMaster / ', h('b', null, crumb)),
