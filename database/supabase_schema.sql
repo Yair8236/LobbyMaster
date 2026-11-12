@@ -1,4 +1,4 @@
--- LobbyMaster · modelo de datos (9 tablas + bitácora) · PostgreSQL (Supabase)
+-- LobbyMaster · modelo de datos (10 tablas + bitácora) · PostgreSQL (Supabase)
 -- Es el mismo modelo de database/schema.sql (MySQL 8), con los tipos de PostgreSQL.
 -- Autor: Yair Anibal Mamani Ticona
 
@@ -52,6 +52,17 @@ CREATE TABLE jugadores_roster (
   nickname  varchar(30) NOT NULL
 );
 
+CREATE TABLE solicitudes_ingreso (
+  id_solicitud    integer PRIMARY KEY,
+  id_equipo       integer     NOT NULL REFERENCES equipos (id_equipo)   ON DELETE CASCADE,
+  id_usuario      integer     NOT NULL REFERENCES usuarios (id_usuario) ON DELETE CASCADE,
+  nickname        varchar(30) NOT NULL,
+  estado          varchar(10) NOT NULL DEFAULT 'pendiente',
+  fecha_solicitud varchar(19) NOT NULL,
+  CONSTRAINT ck_solicitud_estado CHECK (estado IN ('pendiente', 'aceptada', 'rechazada'))
+);
+CREATE UNIQUE INDEX uq_solicitud_pendiente ON solicitudes_ingreso (id_equipo, id_usuario) WHERE estado = 'pendiente';
+
 CREATE TABLE inscripciones (
   id_inscripcion integer PRIMARY KEY,
   id_torneo      integer     NOT NULL REFERENCES torneos (id_torneo) ON DELETE CASCADE,
@@ -100,7 +111,7 @@ CREATE TABLE bitacora (
 DO $$
 DECLARE t text;
 BEGIN
-  FOREACH t IN ARRAY ARRAY['usuarios','juegos','sedes_mapa','torneos','equipos','jugadores_roster','inscripciones','enfrentamientos_brackets','resultados','bitacora']
+  FOREACH t IN ARRAY ARRAY['usuarios','juegos','sedes_mapa','torneos','equipos','jugadores_roster','solicitudes_ingreso','inscripciones','enfrentamientos_brackets','resultados','bitacora']
   LOOP
     EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', t);
     EXECUTE format('CREATE POLICY acceso_demo_%1$s ON %1$I FOR ALL TO anon, authenticated USING (true) WITH CHECK (true)', t);

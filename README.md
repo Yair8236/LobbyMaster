@@ -1,4 +1,4 @@
-# LobbyMaster · Beta 4 (v0.4.0)
+# LobbyMaster · Versión final (v1.0.0)
 
 Plataforma web para organizar torneos de eSports (La Paz y El Alto, Bolivia): inscripciones, brackets automáticos de eliminación directa, resultados, estadísticas y administración por roles.
 
@@ -27,12 +27,13 @@ Otro organizador: `ceja_events` / `Organiza2026`. Capitanes de otros equipos: `w
 - Bracket visual de eliminación directa (4 a 32 equipos, BYE automáticos, avance del ganador, corrección de resultados con aviso del impacto, campeón, zoom, impresión).
 - Inscripciones con estados pendiente / aprobado / rechazado y cupos controlados.
 - Equipos con roster (2 a 8 jugadores) e historial de partidas.
+- **Solicitudes de ingreso a equipos**: cualquier jugador puede pedir entrar a un equipo con su apodo; el capitán acepta (el jugador pasa al roster) o rechaza, y el jugador puede cancelar su solicitud mientras está pendiente.
 - **Sedes con mapa real (OpenStreetMap)**: se elige el lugar buscándolo por nombre, tocando el mapa, usando tu ubicación o pegando el enlace de Google Maps; nadie necesita conocer coordenadas. Cada sede y cada torneo tienen botones **Ver en Google Maps** y **Cómo llegar**.
-- **Base de datos en la nube (Supabase / PostgreSQL)**: todos los datos se guardan en las 9 tablas y se pueden ver desde el panel de Supabase (*Table Editor*).
+- **Base de datos en la nube (Supabase / PostgreSQL)**: todos los datos se guardan en las 10 tablas y se pueden ver desde el panel de Supabase (*Table Editor*).
 - Estadísticas por torneo y ranking global (títulos, victorias, efectividad).
 - Administración: usuarios, roles, juegos, bitácora, exportar SQL/JSON, restaurar datos de demostración.
-- **Modelo de datos**: diagrama ER, normalización paso a paso (sin normalizar → 1FN → 2FN → 3FN), diccionario de datos, explorador de las 9 tablas con datos reales y consultas SQL de ejemplo.
-- Tema oscuro / claro, diseño adaptable a celular.
+- **Modelo de datos**: diagrama ER, normalización paso a paso (sin normalizar → 1FN → 2FN → 3FN), diccionario de datos, explorador de las 10 tablas con datos reales y consultas SQL de ejemplo.
+- Tema claro por defecto (con opción de tema oscuro), diseño adaptable a celular.
 
 ## Validaciones y reglas de negocio
 - Usuario 3–20 caracteres (letras, números, guion bajo), correo válido, contraseña de 8+ con letras y números; usuario y correo únicos.
@@ -42,18 +43,20 @@ Otro organizador: `ceja_events` / `Organiza2026`. Capitanes de otros equipos: `w
 - Solo el organizador del torneo (o un administrador) aprueba, genera el bracket y registra resultados.
 - Mínimo 4 equipos aprobados para generar el bracket; sin empates; puntajes enteros de 0 a 99.
 - Integridad referencial: no se elimina un juego, sede o usuario que esté en uso; siempre existe al menos un administrador.
+- Solicitudes de ingreso: no se pide entrar al propio equipo, no hay apodos repetidos en el roster, una sola solicitud pendiente por equipo y jugador, y no se acepta si el roster ya tiene 8 jugadores. Solo el capitán (o un administrador) responde.
+- Reglas también dentro de la base (Supabase): último administrador, máximo de 8 jugadores por equipo y cupos del torneo (`database/supabase_endurecimiento.sql`).
 
 ## Arquitectura (MVC)
 | Capa | Carpeta | Contenido |
 |---|---|---|
 | Vista | `frontend/` | `index.html`, `css/app.css`, `js/` (interfaz, bracket, pantallas) |
 | Controlador y reglas | `backend/src/` | `auth.js` (hash y permisos por rol), `bracket.js` (motor de brackets), `store.js` (reglas de negocio), `geo.js` (ubicaciones y enlaces de Google Maps) |
-| Modelo | `database/` | `schema.sql` (9 tablas, MySQL 8), `supabase_schema.sql` y `supabase_seed.sql` (PostgreSQL en Supabase) |
+| Modelo | `database/` | `schema.sql` (10 tablas, MySQL 8), `supabase_schema.sql`, `supabase_seed.sql` y `supabase_endurecimiento.sql` (PostgreSQL en Supabase) |
 | Nube | `frontend/js/` | `config.js` (conexión), `sync.js` (sincronización con Supabase), `slippy.js` y `mapa.js` (mapa y selector de ubicación) |
 | Pruebas | `tests/` | `bracket`, `store`, `geo` y `sync` |
 | Documentación | `docs/` | arquitectura y diagrama ER |
 
-`store.js` trabaja con la misma estructura de 9 tablas que `schema.sql`. Los datos se guardan en el navegador y se **sincronizan con Supabase** (PostgreSQL): al abrir la página se descargan las tablas y cada cambio sube solo las filas modificadas. Más detalle en [`docs/SUPABASE.md`](docs/SUPABASE.md).
+`store.js` trabaja con la misma estructura de 10 tablas que `schema.sql`. Los datos se guardan en el navegador y se **sincronizan con Supabase** (PostgreSQL): al abrir la página se descargan las tablas y cada cambio sube solo las filas modificadas. Más detalle en [`docs/SUPABASE.md`](docs/SUPABASE.md).
 
 ## Repositorio y forma de trabajo
 | Tema | Cómo se hace | Dónde verlo |

@@ -18,6 +18,7 @@
     torneos: { pk: 'id_torneo', cols: [['id_torneo', 'INT', 'PK', 'Identificador del torneo'], ['nombre', 'VARCHAR(40)', 'UQ', 'Nombre del torneo'], ['fecha', 'DATE', '', 'Fecha de realización'], ['cupos', 'INT', 'CK', 'Equipos permitidos (4 a 32)'], ['estado', 'VARCHAR(12)', 'CK', 'abierto, en_curso o finalizado'], ['id_juego', 'INT', 'FK', 'Juego → juegos'], ['id_sede', 'INT', 'FK', 'Sede → sedes_mapa'], ['id_organizador', 'INT', 'FK', 'Organizador → usuarios']] },
     equipos: { pk: 'id_equipo', cols: [['id_equipo', 'INT', 'PK', 'Identificador del equipo'], ['nombre', 'VARCHAR(24)', 'UQ', 'Nombre del equipo'], ['id_capitan', 'INT', 'FK', 'Capitán → usuarios']] },
     jugadores_roster: { pk: 'id_roster', cols: [['id_roster', 'INT', 'PK', 'Identificador'], ['id_equipo', 'INT', 'FK', 'Equipo → equipos'], ['nickname', 'VARCHAR(30)', '', 'Apodo del jugador']] },
+    solicitudes_ingreso: { pk: 'id_solicitud', cols: [['id_solicitud', 'INT', 'PK', 'Identificador de la solicitud'], ['id_equipo', 'INT', 'FK', 'Equipo → equipos'], ['id_usuario', 'INT', 'FK', 'Jugador que solicita → usuarios'], ['nickname', 'VARCHAR(30)', '', 'Apodo con el que quiere entrar al roster'], ['estado', 'VARCHAR(10)', 'CK', 'pendiente, aceptada o rechazada'], ['fecha_solicitud', 'TIMESTAMP', '', 'Fecha y hora de la solicitud']] },
     inscripciones: { pk: 'id_inscripcion', cols: [['id_inscripcion', 'INT', 'PK', 'Identificador'], ['id_torneo', 'INT', 'FK', 'Torneo → torneos'], ['id_equipo', 'INT', 'FK', 'Equipo → equipos'], ['estado', 'VARCHAR(10)', 'CK', 'pendiente, aprobado o rechazado']] },
     enfrentamientos_brackets: { pk: 'id_enfrentamiento', cols: [['id_enfrentamiento', 'INT', 'PK', 'Identificador del cruce'], ['id_torneo', 'INT', 'FK', 'Torneo → torneos'], ['ronda', 'INT', '', 'Número de ronda'], ['posicion', 'INT', '', 'Posición dentro de la ronda'], ['id_equipo_a', 'INT', 'FK', 'Equipo A → equipos (nulo = por definir)'], ['id_equipo_b', 'INT', 'FK', 'Equipo B → equipos (nulo = por definir)'], ['id_ganador', 'INT', 'FK', 'Ganador → equipos'], ['id_siguiente', 'INT', 'FK', 'Cruce siguiente → el mismo árbol']] },
     resultados: { pk: 'id_resultado', cols: [['id_resultado', 'INT', 'PK', 'Identificador'], ['id_enfrentamiento', 'INT', 'UQ', 'Cruce → enfrentamientos_brackets'], ['puntaje_a', 'INT', 'CK', 'Puntaje del equipo A'], ['puntaje_b', 'INT', 'CK', 'Puntaje del equipo B'], ['registrado_por', 'INT', 'FK', 'Quién lo registró → usuarios'], ['fecha_registro', 'TIMESTAMP', '', 'Fecha y hora del registro']] }
@@ -48,6 +49,7 @@
     function load() {
       try { const raw = storage.getItem(KEY); S = raw ? JSON.parse(raw) : null; } catch (e) { S = null; }
       if (!S || S.v !== 4) { S = blank(); seed(); save(); }
+      else TABLES.forEach(t => { if (!S.t[t]) S.t[t] = []; }); // datos guardados antes de agregar una tabla nueva
     }
     function insert(table, row) { const pk = SCHEMA[table].pk; S.seq[table] = (S.seq[table] || 0) + 1; row = Object.assign({ [pk]: S.seq[table] }, row); S.t[table].push(row); return row; }
     const rows = (t, f) => (f ? S.t[t].filter(f) : S.t[t]);
@@ -106,7 +108,7 @@
       if (u.rol === 'admin' && rows('usuarios', x => x.rol === 'admin').length === 1) fail('Debe existir al menos un administrador');
       const nT = rows('torneos', t => t.id_organizador === id).length, nE = rows('equipos', e => e.id_capitan === id).length, nR = rows('resultados', r => r.registrado_por === id).length;
       if (nT || nE || nR) fail('No se puede eliminar: tiene ' + [nT && nT + ' torneo(s)', nE && nE + ' equipo(s)', nR && nR + ' resultado(s)'].filter(Boolean).join(', ') + ' asociados (integridad referencial)');
-      remove('usuarios', x => x.id_usuario === id); log(actor, 'Eliminó al usuario ' + u.nombre_usuario); save();
+      remove('solicitudes_ingreso', x => x.id_usuario === id); remove('usuarios', x => x.id_usuario === id); log(actor, 'Eliminó al usuario ' + u.nombre_usuario); save();
     }
     function changePassword(actor, oldPw, newPw) {
       const u = find('usuarios', actor.id_usuario);
@@ -183,12 +185,56 @@
       if (!ownsTeam(actor, e)) fail('Solo el capitán puede eliminar el equipo');
       const n = rows('inscripciones', i => i.id_equipo === id).length;
       if (n) fail('No se puede eliminar: el equipo tiene ' + n + ' inscripción(es). Retira primero las inscripciones.');
-      remove('jugadores_roster', j => j.id_equipo === id); remove('equipos', x => x.id_equipo === id);
+      remove('solicitudes_ingreso', x => x.id_equipo === id); remove('jugadores_roster', j => j.id_equipo === id); remove('equipos', x => x.id_equipo === id);
       log(actor, 'Eliminó el equipo ' + e.nombre); save();
     }
     function listTeams(f) {
       f = f || {};
       return rows('equipos', e => (f.captainId ? e.id_capitan === f.captainId : true)).map(teamView).sort((a, b) => a.nombre.localeCompare(b.nombre));
+    }
+    // ---------- solicitudes de ingreso a un equipo ----------
+    function solicitudView(s) {
+      const e = find('equipos', s.id_equipo), u = find('usuarios', s.id_usuario);
+      return Object.assign({}, s, { equipo: e ? e.nombre : '—', solicitante: u ? u.nombre_usuario : '—', id_capitan: e ? e.id_capitan : null });
+    }
+    function solicitarIngreso(actor, idEquipo, nickname) {
+      need(actor, 'solicitud.crear');
+      const e = find('equipos', idEquipo); if (!e) fail('Equipo no encontrado');
+      if (e.id_capitan === actor.id_usuario) fail('Ya eres el capitán de este equipo');
+      const nick = clean(nickname), ros = rosterOf(idEquipo);
+      if (nick.length < 2 || nick.length > 30) fail('El apodo debe tener entre 2 y 30 caracteres', 'nickname');
+      if (ros.some(j => ci(j) === ci(nick))) fail('Ese apodo ya está en el roster del equipo', 'nickname');
+      if (ros.length >= ROSTER_MAX) fail('El roster de «' + e.nombre + '» ya está completo (' + ROSTER_MAX + ' jugadores)');
+      if (rows('solicitudes_ingreso', x => x.id_equipo === idEquipo && x.id_usuario === actor.id_usuario && x.estado === 'pendiente').length) fail('Ya tienes una solicitud pendiente en este equipo');
+      const s = insert('solicitudes_ingreso', { id_equipo: idEquipo, id_usuario: actor.id_usuario, nickname: nick, estado: 'pendiente', fecha_solicitud: stamp(nowFn()) });
+      log(actor, 'Solicitó unirse al equipo ' + e.nombre); save(); return solicitudView(s);
+    }
+    function listSolicitudes(f) {
+      f = f || {};
+      return rows('solicitudes_ingreso', s => (f.userId ? s.id_usuario === f.userId : true) && (f.teamIds ? f.teamIds.includes(s.id_equipo) : true) && (f.estado ? s.estado === f.estado : true))
+        .map(solicitudView).sort((a, b) => b.id_solicitud - a.id_solicitud);
+    }
+    function resolverSolicitud(actor, id, estado) {
+      const s = find('solicitudes_ingreso', id); if (!s) fail('Solicitud no encontrada');
+      const e = find('equipos', s.id_equipo); if (!e) fail('Equipo no encontrado');
+      if (!ownsTeam(actor, e)) fail('Solo el capitán puede responder las solicitudes de su equipo');
+      if (estado !== 'aceptada' && estado !== 'rechazada') fail('Estado no válido');
+      if (s.estado !== 'pendiente') fail('Esta solicitud ya fue respondida');
+      if (estado === 'aceptada') {
+        const ros = rosterOf(e.id_equipo);
+        if (ros.length >= ROSTER_MAX) fail('El roster ya está completo (' + ROSTER_MAX + ' jugadores)');
+        if (ros.some(j => ci(j) === ci(s.nickname))) fail('Ese apodo ya está en el roster');
+        insert('jugadores_roster', { id_equipo: e.id_equipo, nickname: s.nickname });
+      }
+      s.estado = estado;
+      const u = find('usuarios', s.id_usuario);
+      log(actor, (estado === 'aceptada' ? 'Aceptó' : 'Rechazó') + ' a ' + (u ? u.nombre_usuario : 'un jugador') + ' en el equipo ' + e.nombre); save(); return solicitudView(s);
+    }
+    function cancelarSolicitud(actor, id) {
+      const s = find('solicitudes_ingreso', id); if (!s) fail('Solicitud no encontrada');
+      if (s.id_usuario !== actor.id_usuario) fail('Solo quien la envió puede cancelarla');
+      if (s.estado !== 'pendiente') fail('Solo se pueden cancelar solicitudes pendientes');
+      remove('solicitudes_ingreso', x => x.id_solicitud === id); log(actor, 'Canceló su solicitud de ingreso'); save();
     }
     const getTeam = id => { const e = find('equipos', id); return e ? teamView(e) : null; };
 
@@ -402,7 +448,7 @@
       return {
         usuarios: rows('usuarios').length, equipos: rows('equipos').length, jugadores: rows('jugadores_roster').length, sedes: rows('sedes_mapa').length,
         torneos: ts.length, abiertos: ts.filter(t => t.estado === 'abierto').length, en_curso: ts.filter(t => t.estado === 'en_curso').length, finalizados: ts.filter(t => t.estado === 'finalizado').length,
-        partidas: rows('resultados').length, pendientes: rows('inscripciones', i => i.estado === 'pendiente').length, porJuego
+        partidas: rows('resultados').length, solicitudes: rows('solicitudes_ingreso', x => x.estado === 'pendiente').length, pendientes: rows('inscripciones', i => i.estado === 'pendiente').length, porJuego
       };
     }
     const bitacora = n => S.log.slice(0, n || 15);
@@ -462,6 +508,9 @@
       const play = (idT, list, when) => list.forEach(([r, i, sa, sb]) => { const b = getBracket(idT); registrarResultado(org, b.rounds[r][i].id_enfrentamiento, sa, sb, when); });
       play(T1.id_torneo, [[0, 0, 2, 0], [0, 1, 2, 1], [0, 2, 1, 2], [0, 3, 2, 1], [1, 0, 2, 0], [1, 1, 1, 2], [2, 0, 2, 1]], day(-35));
       play(T2.id_torneo, [[0, 0, 2, 1], [0, 1, 0, 2], [1, 0, 2, 0], [0, 2, 2, 0]], day(-2));
+      // solicitudes de ingreso de demostración (a «Illimani eSports», cuyo capitán es la cuenta «jugador»)
+      const sol = (id, user, nick, est) => insert('solicitudes_ingreso', { id_equipo: id, id_usuario: rows('usuarios', x => x.nombre_usuario === user)[0].id_usuario, nickname: nick, estado: est, fecha_solicitud: stamp(day(-1)) });
+      sol(1, 'wayna_pro', 'Wayna_Fox', 'pendiente'); sol(1, 'sajama_clan', 'Sajama_Zero', 'pendiente'); sol(1, 'titi_lake', 'Lago_Azul', 'rechazada');
       void admin; silent = false;
       S.log = [{ id: Date.now() * 1000, t: stamp(nowFn()), u: 'sistema', msg: 'Datos de demostración cargados' }];
     }
@@ -471,7 +520,7 @@
       SCHEMA, TABLES, MIN_EQUIPOS, ROSTER_MIN, ROSTER_MAX, MAX_PUNTAJE,
       register, login, getUser, listUsers, setRole, deleteUser, changePassword,
       listGames, addGame, deleteGame, listSedes, addSede, updateSede, deleteSede,
-      listTeams, getTeam, createTeam, updateTeam, deleteTeam,
+      listTeams, getTeam, createTeam, updateTeam, deleteTeam, solicitarIngreso, listSolicitudes, resolverSolicitud, cancelarSolicitud,
       listTorneos, getTorneo, createTorneo, updateTorneo, deleteTorneo,
       listInscripciones, listInscripcionesDeEquipos, inscribir, resolver, retirar,
       getBracket, generarBracket, registrarResultado, previewImpact, reiniciarBracket,

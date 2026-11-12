@@ -1,7 +1,7 @@
 // Prueba de la sincronizacion con la base remota usando un servidor PostgREST simulado: node tests/sync.test.js
 const assert = require('assert'), vm = require('vm'), fs = require('fs'), path = require('path'), Store = require('../backend/src/store.js');
 const mem = () => { const m = {}; return { getItem: k => (k in m ? m[k] : null), setItem: (k, v) => { m[k] = v; }, removeItem: k => { delete m[k]; } }; };
-const PKS = { usuarios: 'id_usuario', juegos: 'id_juego', sedes_mapa: 'id_sede', torneos: 'id_torneo', equipos: 'id_equipo', jugadores_roster: 'id_roster', inscripciones: 'id_inscripcion', enfrentamientos_brackets: 'id_enfrentamiento', resultados: 'id_resultado', bitacora: 'id_bitacora' };
+const PKS = { usuarios: 'id_usuario', juegos: 'id_juego', sedes_mapa: 'id_sede', torneos: 'id_torneo', equipos: 'id_equipo', jugadores_roster: 'id_roster', solicitudes_ingreso: 'id_solicitud', inscripciones: 'id_inscripcion', enfrentamientos_brackets: 'id_enfrentamiento', resultados: 'id_resultado', bitacora: 'id_bitacora' };
 
 function servidor() {
   const tabla = {}; Object.keys(PKS).forEach(t => { tabla[t] = []; });

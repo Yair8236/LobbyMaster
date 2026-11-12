@@ -43,9 +43,9 @@
   const ROLES = { admin: 'Administrador', organizador: 'Organizador', jugador: 'Jugador' };
   // Matriz de permisos: que puede hacer cada rol (el controlador la consulta antes de actuar)
   const PERMS = {
-    admin: ['torneo.crear', 'torneo.gestionar_todos', 'equipo.crear', 'equipo.ver_todos', 'inscribir', 'usuarios.admin', 'catalogos.admin', 'sede.crear', 'datos.ver'],
-    organizador: ['torneo.crear', 'sede.crear', 'equipo.crear', 'inscribir'],
-    jugador: ['equipo.crear', 'inscribir']
+    admin: ['torneo.crear', 'torneo.gestionar_todos', 'equipo.crear', 'equipo.ver_todos', 'inscribir', 'usuarios.admin', 'catalogos.admin', 'sede.crear', 'solicitud.crear', 'datos.ver'],
+    organizador: ['torneo.crear', 'sede.crear', 'equipo.crear', 'inscribir', 'solicitud.crear'],
+    jugador: ['equipo.crear', 'inscribir', 'solicitud.crear']
   };
   const can = (user, perm) => !!user && (PERMS[user.rol] || []).includes(perm);
   const canManageTorneo = (user, torneo) => !!user && !!torneo && (can(user, 'torneo.gestionar_todos') || (user.rol === 'organizador' && torneo.id_organizador === user.id_usuario));
