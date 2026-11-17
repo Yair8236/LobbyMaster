@@ -150,7 +150,7 @@ En **Administración** puedes:
 - **Bitácora:** ver las últimas acciones del sistema.
 - **Datos:** exportar la información en SQL o JSON y **Restaurar datos de demostración**.
 
-En **Modelo de datos** se muestran el diagrama entidad-relación, la normalización (sin normalizar → 1FN → 2FN → 3FN), el diccionario de datos y un explorador de las 9 tablas.
+En **Modelo de datos** se muestran el diagrama entidad-relación, la normalización (sin normalizar → 1FN → 2FN → 3FN), el diccionario de datos y un explorador de las 10 tablas.
 
 ![Modelo de datos](img/11_modelo.png)
 

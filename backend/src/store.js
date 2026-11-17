@@ -1,4 +1,4 @@
-// LobbyMaster Beta 4 - capa MODELO. Guarda los datos en 9 tablas normalizadas (mismo esquema que database/schema.sql).
+// LobbyMaster v1.0 - capa MODELO. Guarda los datos en 10 tablas normalizadas (mismo esquema que database/schema.sql).
 // Persiste en localStorage y, mediante opts.onSave / hydrate, se sincroniza con la base de datos PostgreSQL de Supabase (frontend/js/sync.js).
 // Autor: Yair Anibal Mamani Ticona
 (function (root) {
