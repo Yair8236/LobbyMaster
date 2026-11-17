@@ -1,4 +1,4 @@
-// LobbyMaster Beta 4 · controlador: sesion, rutas y estructura general. Autor: Yair Anibal Mamani Ticona
+// LobbyMaster v1.0 · controlador: sesion, rutas y estructura general. Autor: Yair Anibal Mamani Ticona
 (function (root) {
   const { h, clear, icon, svgEl, chip, rolChip, avatar, toast, modal, field, showErrors } = root.UI;
   const Auth = root.Auth, V = root.Views;
