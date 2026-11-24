@@ -1,4 +1,4 @@
-// LobbyMaster Beta 4 · configuración de la base de datos en la nube (Supabase / PostgreSQL).
+// LobbyMaster v1.0 · configuración de la base de datos en la nube (Supabase / PostgreSQL).
 // La clave "publishable" es pública por diseño: solo permite lo que las políticas RLS de la base autorizan.
 // Autor: Yair Anibal Mamani Ticona
 (function (root) {

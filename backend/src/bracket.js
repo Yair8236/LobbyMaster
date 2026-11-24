@@ -1,4 +1,4 @@
-// LobbyMaster Beta - motor de brackets (eliminacion directa). Autor: Yair Anibal Mamani Ticona
+// LobbyMaster v1.0 · motor de brackets (eliminacion directa). Autor: Yair Anibal Mamani Ticona
 (function (root) {
   const pow2 = n => { let s = 1; while (s < n) s *= 2; return s; };
   function clear(b, r, i) {

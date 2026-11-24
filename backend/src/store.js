@@ -36,7 +36,7 @@
 
   function create(storage, opts) {
     opts = opts || {};
-    const KEY = 'lobbymaster.beta4.db';
+    const KEY = 'lobbymaster.beta4.db'; // nombre historico de la clave; se conserva para no perder los datos ya guardados
     const nowFn = opts.now || (() => new Date());
     let S, silent = false, hydrating = false, logSeq = 0;
 

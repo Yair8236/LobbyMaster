@@ -1,4 +1,4 @@
-// LobbyMaster Beta 4 · vistas: equipos, sedes (mapa) y ranking. Autor: Yair Anibal Mamani Ticona
+// LobbyMaster v1.0 · vistas: equipos, sedes (mapa) y ranking. Autor: Yair Anibal Mamani Ticona
 (function (root) {
   const { h, icon, svgEl, fmtDate, chip, teamBadge, toast, modal, confirmBox, field, showErrors, barsH, empty } = root.UI;
   const Auth = root.Auth, V = (root.Views = root.Views || {});

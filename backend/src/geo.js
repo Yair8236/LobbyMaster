@@ -1,4 +1,4 @@
-// LobbyMaster Beta 4 - utilidades de ubicacion: leer coordenadas desde un enlace de Google Maps y armar enlaces.
+// LobbyMaster v1.0 · utilidades de ubicacion: leer coordenadas desde un enlace de Google Maps y armar enlaces.
 // Asi nadie tiene que saber ni escribir coordenadas: se elige en el mapa o se pega el enlace/lugar de Google Maps.
 // Autor: Yair Anibal Mamani Ticona
 (function (root) {
