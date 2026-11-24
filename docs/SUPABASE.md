@@ -30,3 +30,13 @@ Cada vez que registras algo en la plataforma (un torneo, una inscripción, un re
 Es un proyecto académico: las políticas permiten que la clave pública lea y escriba solo estas 10 tablas. Eso incluye los hashes de contraseñas (SHA-256 con sal), así que **no uses contraseñas reales**. En un sistema real se usaría Supabase Auth, políticas por rol y un backend para las reglas críticas.
 
 **Endurecimiento (v1.0).** `database/supabase_endurecimiento.sql` quita a la clave pública los privilegios que la web no usa (TRUNCATE, TRIGGER, REFERENCES) y agrega reglas dentro de la base: nunca se puede borrar ni degradar al último administrador, un equipo no pasa de 8 jugadores y no se aprueban más equipos que los cupos del torneo. Aun así, las políticas siguen abiertas para la clave pública (INC-03): una autorización real por usuario requiere Supabase Auth, y queda como trabajo futuro.
+
+## Proyecto pausado por inactividad
+
+El plan gratuito de Supabase pausa los proyectos que pasan una semana sin uso. Si la aplicación muestra «sin conexión» y el panel de Supabase indica que el proyecto está en pausa:
+
+1. Entrar a https://supabase.com/dashboard y abrir el proyecto `lobbymaster`.
+2. Pulsar **Restore project** y esperar unos minutos hasta que el estado sea *Healthy*.
+3. En la aplicación, usar el indicador de conexión de la barra superior para reconectar.
+
+Mientras tanto la aplicación sigue funcionando con los datos guardados en el navegador y sube los cambios al reconectar.
