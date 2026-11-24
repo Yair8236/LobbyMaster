@@ -1,4 +1,4 @@
-// LobbyMaster Beta 4 · selector de ubicacion: se busca el lugar, se toca el mapa o se pega el enlace de Google Maps.
+// LobbyMaster v1.0 · selector de ubicacion: se busca el lugar, se toca el mapa o se pega el enlace de Google Maps.
 // Nadie necesita conocer coordenadas. Autor: Yair Anibal Mamani Ticona
 (function (root) {
   const { h, icon, toast } = root.UI, Geo = root.Geo;

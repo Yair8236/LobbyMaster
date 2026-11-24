@@ -1,4 +1,4 @@
-// LobbyMaster Beta 4 · mapa interactivo propio (sin librerias): arrastrar, zoom, marcadores y clic para elegir un lugar.
+// LobbyMaster v1.0 · mapa interactivo propio (sin librerias): arrastrar, zoom, marcadores y clic para elegir un lugar.
 // Usa mosaicos de OpenStreetMap (© colaboradores de OpenStreetMap). Autor: Yair Anibal Mamani Ticona
 (function (root) {
   const Geo = root.Geo, TS = Geo.TS, MINZ = 3, MAXZ = 18;

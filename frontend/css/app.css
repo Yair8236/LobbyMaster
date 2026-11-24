@@ -1,4 +1,4 @@
-/* LobbyMaster Beta 3 · estilos · Autor: Yair Anibal Mamani Ticona */
+/* LobbyMaster v1.0 · estilos · Autor: Yair Anibal Mamani Ticona */
 :root {
   --bg: #090c12; --s1: #0f141d; --s2: #141b27; --s3: #1b2433; --line: #222c3f; --line2: #2f3c55;
   --tx: #e8ecf4; --tx2: #9aa6bd; --tx3: #66738c;
@@ -172,7 +172,7 @@ svg.ic { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-wid
 }
 @media print { body::before, .side, .top, .bk-tools, .toasts { display: none !important; } .app { display: block; } .page { padding: 0; max-width: none; } .bk-view { border: 0; overflow: visible; } :root { --bg: #fff; } }
 
-/* ---------- Beta 4: mapa propio, selector de ubicacion y estado de la nube ---------- */
+/* ---------- Mapa propio, selector de ubicacion y estado de la nube ---------- */
 .slippy { position: relative; overflow: hidden; background: var(--s2) repeating-linear-gradient(0deg, transparent 0 39px, var(--grid) 39px 40px), repeating-linear-gradient(90deg, transparent 0 39px, var(--grid) 39px 40px); border: 1px solid var(--line); border-radius: 6px; cursor: grab; touch-action: none; user-select: none; outline-offset: 2px; }
 .slippy.moving { cursor: grabbing; }
 .pk-map { height: 300px; } .pk-map.tall { height: 520px; }

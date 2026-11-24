@@ -1,4 +1,4 @@
-// LobbyMaster Beta 4 - autenticacion y permisos por rol. Autor: Yair Anibal Mamani Ticona
+// LobbyMaster v1.0 · autenticacion y permisos por rol. Autor: Yair Anibal Mamani Ticona
 (function (root) {
   // SHA-256 en JavaScript puro (sincrono, funciona tambien abriendo el archivo sin servidor)
   function sha256(text) {

@@ -1,4 +1,4 @@
-// LobbyMaster Beta 4 · sincronización con Supabase (PostgreSQL).
+// LobbyMaster v1.0 · sincronización con Supabase (PostgreSQL).
 // - Al abrir la página descarga las tablas y las carga en el modelo; si la base está vacía, sube los datos de demostración.
 // - Cada cambio del modelo se envía a la base (solo las filas que cambiaron).
 // - Si no hay internet, la app sigue funcionando con el navegador y avisa que está "sin conexión".

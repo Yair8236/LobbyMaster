@@ -1,4 +1,4 @@
-// LobbyMaster Beta 4 · vistas: inicio y torneos (incluye bracket y resultados). Autor: Yair Anibal Mamani Ticona
+// LobbyMaster v1.0 · vistas: inicio y torneos (incluye bracket y resultados). Autor: Yair Anibal Mamani Ticona
 (function (root) {
   const { h, icon, fmtDate, chip, teamBadge, toast, modal, confirmBox, field, showErrors, barsH, gameCover, empty } = root.UI;
   const Auth = root.Auth, V = (root.Views = root.Views || {});
